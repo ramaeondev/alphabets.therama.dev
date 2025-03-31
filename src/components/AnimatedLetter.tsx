@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface AnimatedLetterProps {
@@ -7,8 +7,6 @@ interface AnimatedLetterProps {
 }
 
 const AnimatedLetter: React.FC<AnimatedLetterProps> = ({ letter }) => {
-  const [animationState, setAnimationState] = useState<'entering' | 'visible' | 'exiting'>('entering');
-  
   // Get a random color for the letter
   const getRandomColor = () => {
     const colors = [
@@ -27,24 +25,13 @@ const AnimatedLetter: React.FC<AnimatedLetterProps> = ({ letter }) => {
   
   const [letterColor] = useState(getRandomColor());
   
-  useEffect(() => {
-    // Set to visible after a short delay
-    const visibleTimer = setTimeout(() => {
-      setAnimationState('visible');
-    }, 100);
-    
-    return () => clearTimeout(visibleTimer);
-  }, [letter]);
-  
   return (
-    <div className="relative flex items-center justify-center w-full h-full">
+    <div className="relative flex items-center justify-center w-full h-40">
       <span
         className={cn(
-          "text-9xl md:text-[12rem] font-bold transition-all duration-500 transform",
+          "text-9xl md:text-[12rem] font-bold transition-all duration-500",
           letterColor,
-          animationState === 'entering' && "scale-0 opacity-0",
-          animationState === 'visible' && "scale-100 opacity-100 animate-bounce",
-          animationState === 'exiting' && "scale-0 opacity-0"
+          "scale-100 opacity-100" // No continuous animation
         )}
       >
         {letter}
