@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -37,16 +38,16 @@ const createItemsMapping = () => {
     'X': ['X-ray', 'Xylophone', 'Box', 'Fox', 'Axe', 'Exit', 'Taxi', 'Mixer', 'Six', 'Ox'],
     'Y': ['Yo-yo', 'Yacht', 'Yak', 'Yogurt', 'Yarn', 'Yellow', 'Yawn', 'Yard', 'Yell', 'Year'],
     'Z': ['Zebra', 'Zoo', 'Zipper', 'Zero', 'Zigzag', 'Zinc', 'Zucchini', 'Zoom', 'Zone', 'Zombie'],
-    '0': ['Zero', 'Owl', 'Orange', 'Ocean', 'Octopus', 'Oval', 'Onion', 'Otter', 'Ostrich', 'Ornament'],
-    '1': ['One', 'Unicorn', 'Umbrella', 'Universe', 'Utensil', 'Uniform', 'Uncle', 'Upstairs', 'Unity', 'Ukulele'],
-    '2': ['Two', 'Toucan', 'Turtle', 'Tiger', 'Train', 'Tooth', 'Tree', 'Tomato', 'Toy', 'Telescope'],
-    '3': ['Three', 'Triangle', 'Truck', 'Throne', 'Thread', 'Thimble', 'Thunder', 'Theater', 'Thistle', 'Thrill'],
-    '4': ['Four', 'Fountain', 'Forest', 'Flower', 'Fish', 'Flag', 'Frog', 'Fire', 'Fruit', 'Fork'],
-    '5': ['Five', 'Fish', 'Finger', 'Fairy', 'Ferris wheel', 'Fountain', 'Feather', 'Farm', 'Football', 'Fence'],
-    '6': ['Six', 'Seal', 'Snake', 'Submarine', 'Sofa', 'Sandwich', 'Skate', 'Soup', 'Squirrel', 'Sunflower'],
-    '7': ['Seven', 'Snail', 'Spider', 'Shark', 'Swan', 'Snowman', 'Staircase', 'Submarine', 'Sailboat', 'Sword'],
-    '8': ['Eight', 'Elephant', 'Eagle', 'Earth', 'Egg', 'Elf', 'Engine', 'Entertainer', 'Envelope', 'Exit'],
-    '9': ['Nine', 'Nail', 'Notebook', 'Nurse', 'Nest', 'Nose', 'Needle', 'Noodle', 'Napkin', 'Nightingale'],
+    '0': ['Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero'],
+    '1': ['One', 'One', 'One', 'One', 'One', 'One', 'One', 'One', 'One', 'One'],
+    '2': ['Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two'],
+    '3': ['Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three'],
+    '4': ['Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four'],
+    '5': ['Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five'],
+    '6': ['Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six'],
+    '7': ['Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven'],
+    '8': ['Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight'],
+    '9': ['Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine'],
   };
   
   letters.split('').forEach(char => {
@@ -54,7 +55,7 @@ const createItemsMapping = () => {
     
     mapping[char] = words.map((word, index) => ({
       word,
-      image: `/${char.toLowerCase()}-${index + 1}.jpg` // This is a placeholder, will need actual images
+      image: `/images/${char.toLowerCase()}-${index + 1}.jpg` // Updated image path
     }));
   });
   
@@ -64,6 +65,7 @@ const createItemsMapping = () => {
 const TypingGame = () => {
   const [currentLetter, setCurrentLetter] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [showBoomEffect, setShowBoomEffect] = useState<boolean>(false);
   const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
   const [letterCounter, setLetterCounter] = useState<Record<string, number>>({});
   const [currentWordAndImage, setCurrentWordAndImage] = useState<{word: string, image: string} | null>(null);
@@ -71,6 +73,7 @@ const TypingGame = () => {
   const { toast } = useToast();
   const lastLetter = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Add event listener for keyboard input
@@ -88,12 +91,14 @@ const TypingGame = () => {
     // Clean up the event listener
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
+      }
     };
   }, [isAnimating]);
 
   const speakLetter = (letter: string, word: string) => {
     // Using the Web Speech API for simplicity
-    // In a production app, you would use pre-recorded audio files for better quality
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(`${letter}. ${word}`);
       
@@ -101,7 +106,6 @@ const TypingGame = () => {
       const voices = window.speechSynthesis.getVoices();
       
       // Select a voice based on the selected voice type
-      // This is a simple implementation; you might want to pre-select specific voices
       const selectedVoice = voices.find(voice => 
         voiceType === 'male' 
           ? voice.name.toLowerCase().includes('male') || !voice.name.toLowerCase().includes('female')
@@ -111,6 +115,18 @@ const TypingGame = () => {
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
+      
+      // Set up event for when speech ends
+      utterance.onend = () => {
+        // End the boom effect when speech is done
+        setShowBoomEffect(false);
+      };
+      
+      // Fallback in case the speech event doesn't fire
+      const estimatedSpeechTime = (letter.length + word.length) * 100; // rough estimate
+      speechEndTimeoutRef.current = setTimeout(() => {
+        setShowBoomEffect(false);
+      }, Math.max(1500, estimatedSpeechTime)); // At least 1.5 seconds to ensure animation is visible
       
       window.speechSynthesis.speak(utterance);
     }
@@ -130,6 +146,11 @@ const TypingGame = () => {
     const wordAndImage = itemsMapping.current[letter][newCount];
     setCurrentWordAndImage(wordAndImage);
     
+    // Clear any previous timeout
+    if (speechEndTimeoutRef.current) {
+      clearTimeout(speechEndTimeoutRef.current);
+    }
+    
     // Play sound boom effect
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
@@ -144,6 +165,7 @@ const TypingGame = () => {
       setCurrentLetter(letter);
       setIsAnimating(false);
       lastLetter.current = letter;
+      setShowBoomEffect(true); // Show boom effect when letter appears
       
       // Speak the letter and word
       if (wordAndImage) {
@@ -171,8 +193,8 @@ const TypingGame = () => {
         {/* Sound effect audio element */}
         <audio ref={audioRef} src="/pop-sound.mp3" preload="auto"></audio>
         
-        {/* Background animation for sound boom */}
-        {currentLetter && (
+        {/* Background animation for sound boom - only shown when showBoomEffect is true */}
+        {currentLetter && showBoomEffect && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-30"></div>
           </div>
