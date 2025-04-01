@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 interface KeyboardProps {
   onLetterClick: (letter: string) => void;
   showNumbers?: boolean;
+  darkMode?: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onLetterClick, showNumbers = false }) => {
+const Keyboard: React.FC<KeyboardProps> = ({ onLetterClick, showNumbers = false, darkMode = false }) => {
   const alphabetRows = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -28,8 +29,10 @@ const Keyboard: React.FC<KeyboardProps> = ({ onLetterClick, showNumbers = false 
               onClick={() => onLetterClick(key)}
               className={cn(
                 "w-8 h-10 md:w-12 md:h-14 rounded-lg flex items-center justify-center",
-                "bg-gradient-to-b from-gray-100 to-gray-300 hover:from-gray-200 hover:to-gray-400",
-                "text-lg md:text-2xl font-bold text-gray-700 shadow-md",
+                darkMode
+                  ? "bg-gradient-to-b from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 text-white"
+                  : "bg-gradient-to-b from-gray-100 to-gray-300 hover:from-gray-200 hover:to-gray-400 text-gray-700",
+                "text-lg md:text-2xl font-bold shadow-md",
                 "transition-transform active:scale-95"
               )}
             >
