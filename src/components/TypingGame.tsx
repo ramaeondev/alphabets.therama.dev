@@ -83,8 +83,15 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
 
   useEffect(() => {
+    // Check if speech synthesis is available in this browser
+    if (!('speechSynthesis' in window)) {
+      setSpeechAvailable(false);
+      console.warn("Speech synthesis not available in this browser");
+    }
+    
     // Add event listener for keyboard input
     const handleKeyPress = (event: KeyboardEvent) => {
       const key = event.key;
@@ -104,11 +111,11 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         clearTimeout(speechEndTimeoutRef.current);
       }
       // Cancel any ongoing speech
-      if (speechSynthesisRef.current) {
+      if (speechSynthesisRef.current && speechAvailable) {
         window.speechSynthesis.cancel();
       }
     };
-  }, [isAnimating]);
+  }, [isAnimating, speechAvailable]);
 
   // Ensure speech synthesis voices are loaded
   useEffect(() => {
@@ -116,7 +123,11 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     const initVoices = () => {
       if ('speechSynthesis' in window) {
         // Force the browser to load voices
-        window.speechSynthesis.getVoices();
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) {
+          // If no voices are available initially, try again after a delay
+          setTimeout(initVoices, 500);
+        }
       }
     };
 
@@ -137,8 +148,17 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   }, []);
 
   const speakLetter = (letter: string, word: string) => {
+    // Skip if speech synthesis is not available
+    if (!speechAvailable) {
+      // Just show the boom effect for a while and then hide it
+      setTimeout(() => {
+        setShowBoomEffect(false);
+      }, 1500);
+      return;
+    }
+    
     // Using the Web Speech API
-    if ('speechSynthesis' in window) {
+    try {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       
@@ -153,17 +173,23 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       const voices = window.speechSynthesis.getVoices();
       
       // Select a voice based on the selected voice type
-      const selectedVoice = voices.find(voice => 
+      // First look for voices that explicitly match our criteria
+      let selectedVoice = voices.find(voice => 
         voiceType === 'male' 
-          ? voice.name.toLowerCase().includes('male') || 
-            (!voice.name.toLowerCase().includes('female') && !voice.name.toLowerCase().includes('woman'))
+          ? voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man')
           : voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')
       );
+      
+      // If no specific voice found, fallback to any voice
+      if (!selectedVoice && voices.length > 0) {
+        console.log("No specific voice found, using first available voice");
+        selectedVoice = voices[0];
+      }
       
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       } else {
-        console.log("No appropriate voice found, using default voice");
+        console.log("No voices available, using default voice");
       }
       
       // Set up event for when speech ends
@@ -176,26 +202,34 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       utterance.onerror = (event) => {
         console.error("Speech synthesis error:", event);
         setShowBoomEffect(false);
+        speechSynthesisRef.current = null;
+        
+        // If speech is interrupted too many times, consider disabling it
+        if (event.error === 'interrupted') {
+          // Just hide the boom effect and continue
+          setShowBoomEffect(false);
+        }
       };
       
       // Fallback in case the speech event doesn't fire
-      const estimatedSpeechTime = (letter.length + (isNumber ? 0 : word.length)) * 100; // rough estimate
+      const estimatedSpeechTime = Math.max(1500, (letter.length + (isNumber ? 0 : word.length)) * 100); // rough estimate
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
+      }
+      
       speechEndTimeoutRef.current = setTimeout(() => {
         setShowBoomEffect(false);
-      }, Math.max(1500, estimatedSpeechTime)); // At least 1.5 seconds
+      }, estimatedSpeechTime);
       
       // Explicitly try to speak and catch any errors
-      try {
-        window.speechSynthesis.speak(utterance);
-        console.log("Speaking:", textToSpeak);
-      } catch (error) {
-        console.error("Speech synthesis speak error:", error);
-        setShowBoomEffect(false);
-      }
-    } else {
-      console.log("Speech synthesis not supported in this browser");
-      // Still end the boom effect after a delay even if speech is not supported
-      speechEndTimeoutRef.current = setTimeout(() => {
+      window.speechSynthesis.speak(utterance);
+      console.log("Speaking:", textToSpeak);
+    } catch (error) {
+      console.error("Speech synthesis error:", error);
+      setShowBoomEffect(false);
+      
+      // Fall back to no speech
+      setTimeout(() => {
         setShowBoomEffect(false);
       }, 1500);
     }
@@ -223,7 +257,13 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     // Play sound boom effect
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+      try {
+        audioRef.current.play().catch(e => {
+          console.error("Audio play failed:", e);
+        });
+      } catch (error) {
+        console.error("Audio play error:", error);
+      }
     }
     
     // First clear the current letter

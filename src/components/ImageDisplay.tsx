@@ -8,12 +8,24 @@ interface ImageDisplayProps {
 
 const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
   const [hasError, setHasError] = useState(false);
+  const [loadAttempted, setLoadAttempted] = useState(false);
   
-  // Fallback image in case the specified one doesn't exist
+  // Attempt to use a fallback image if the primary one fails
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log("Image failed to load:", imagePath);
-    setHasError(true);
-    e.currentTarget.src = "/placeholder.svg";
+    
+    // If this is the first attempt, try a more generic fallback
+    if (!loadAttempted) {
+      setLoadAttempted(true);
+      
+      // Try to load a generic image for this letter (first character)
+      const letter = word.charAt(0).toLowerCase();
+      e.currentTarget.src = `/images/${letter}-1.jpg`;
+    } else {
+      // If that also fails, show the error state
+      setHasError(true);
+      e.currentTarget.src = "/placeholder.svg";
+    }
   };
 
   return (
@@ -21,8 +33,11 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
       <div className="text-xl font-semibold text-gray-700 mb-2">{word}</div>
       <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-purple-300 bg-white relative">
         {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
-            Image not found
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 p-2 text-center">
+            <p>
+              Place images in<br />
+              /public/images/{imagePath.split('/').pop()?.split('.')[0]}.jpg
+            </p>
           </div>
         )}
         <img
@@ -32,8 +47,9 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
           className="w-full h-full object-contain"
         />
       </div>
-      {/* Display the path for debugging purposes */}
-      <div className="text-xs text-gray-400 mt-1">{imagePath}</div>
+      
+      {/* Only show path if there's an error, since it's more for debugging */}
+      {hasError && <div className="text-xs text-gray-400 mt-1">{imagePath}</div>}
     </div>
   );
 };
