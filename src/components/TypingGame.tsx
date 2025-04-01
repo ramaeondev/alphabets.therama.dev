@@ -4,7 +4,7 @@ import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
 import VoiceSelector from './VoiceSelector';
 import ImageDisplay from './ImageDisplay';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Create a mapping for each letter/number with multiple words and images
 const createItemsMapping = () => {
@@ -38,31 +38,39 @@ const createItemsMapping = () => {
     'X': ['X-ray', 'Xylophone', 'Box', 'Fox', 'Axe', 'Exit', 'Taxi', 'Mixer', 'Six', 'Ox'],
     'Y': ['Yo-yo', 'Yacht', 'Yak', 'Yogurt', 'Yarn', 'Yellow', 'Yawn', 'Yard', 'Yell', 'Year'],
     'Z': ['Zebra', 'Zoo', 'Zipper', 'Zero', 'Zigzag', 'Zinc', 'Zucchini', 'Zoom', 'Zone', 'Zombie'],
-    '0': ['Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero', 'Zero'],
-    '1': ['One', 'One', 'One', 'One', 'One', 'One', 'One', 'One', 'One', 'One'],
-    '2': ['Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two', 'Two'],
-    '3': ['Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three', 'Three'],
-    '4': ['Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four', 'Four'],
-    '5': ['Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five', 'Five'],
-    '6': ['Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six', 'Six'],
-    '7': ['Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven', 'Seven'],
-    '8': ['Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight', 'Eight'],
-    '9': ['Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine', 'Nine'],
+    '0': ['Zero'],
+    '1': ['One'],
+    '2': ['Two'],
+    '3': ['Three'],
+    '4': ['Four'],
+    '5': ['Five'],
+    '6': ['Six'],
+    '7': ['Seven'],
+    '8': ['Eight'],
+    '9': ['Nine'],
   };
   
   letters.split('').forEach(char => {
-    const words = defaultWords[char] || Array(10).fill(`${char}-word`);
+    const isNumber = /\d/.test(char);
+    // For numbers, just repeat the same word for all 10 slots
+    const words = isNumber 
+      ? Array(10).fill(defaultWords[char][0])
+      : (defaultWords[char] || Array(10).fill(`${char}-word`));
     
     mapping[char] = words.map((word, index) => ({
       word,
-      image: `/images/${char.toLowerCase()}-${index + 1}.jpg` // Updated image path
+      image: `/images/${char.toLowerCase()}-${index + 1}.jpg` // Image path
     }));
   });
   
   return mapping;
 };
 
-const TypingGame = () => {
+interface TypingGameProps {
+  darkMode?: boolean;
+}
+
+const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const [currentLetter, setCurrentLetter] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showBoomEffect, setShowBoomEffect] = useState<boolean>(false);
@@ -74,6 +82,7 @@ const TypingGame = () => {
   const lastLetter = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     // Add event listener for keyboard input
@@ -94,13 +103,27 @@ const TypingGame = () => {
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
+      // Cancel any ongoing speech
+      if (speechSynthesisRef.current) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, [isAnimating]);
 
   const speakLetter = (letter: string, word: string) => {
-    // Using the Web Speech API for simplicity
+    // Using the Web Speech API
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(`${letter}. ${word}`);
+      // Cancel any ongoing speech
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      
+      // For numbers, just speak the number itself, not the word
+      const isNumber = /\d/.test(letter);
+      const textToSpeak = isNumber ? letter : `${letter}. ${word}`;
+      
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      speechSynthesisRef.current = utterance;
       
       // Get voices
       const voices = window.speechSynthesis.getVoices();
@@ -120,13 +143,14 @@ const TypingGame = () => {
       utterance.onend = () => {
         // End the boom effect when speech is done
         setShowBoomEffect(false);
+        speechSynthesisRef.current = null;
       };
       
       // Fallback in case the speech event doesn't fire
-      const estimatedSpeechTime = (letter.length + word.length) * 100; // rough estimate
+      const estimatedSpeechTime = (letter.length + (isNumber ? 0 : word.length)) * 100; // rough estimate
       speechEndTimeoutRef.current = setTimeout(() => {
         setShowBoomEffect(false);
-      }, Math.max(1500, estimatedSpeechTime)); // At least 1.5 seconds to ensure animation is visible
+      }, Math.max(1500, estimatedSpeechTime)); // At least 1.5 seconds
       
       window.speechSynthesis.speak(utterance);
     }
@@ -181,22 +205,27 @@ const TypingGame = () => {
     }, 200);
   };
 
+  const bgColor = darkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = darkMode ? 'text-white' : 'text-gray-700';
+
   return (
-    <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
+    <div className={`${bgColor} rounded-2xl shadow-2xl p-6 md:p-8 transition-colors duration-300`}>
       <div className="text-center mb-6">
-        <p className="text-xl text-gray-600">Type any letter or number on your keyboard or tap below!</p>
+        <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          Type any letter or number on your keyboard or tap below!
+        </p>
         
         <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} />
       </div>
       
-      <div className="flex flex-col items-center h-80 md:h-96 mb-8 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl overflow-hidden relative">
+      <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>
         {/* Sound effect audio element */}
         <audio ref={audioRef} src="/pop-sound.mp3" preload="auto"></audio>
         
         {/* Background animation for sound boom - only shown when showBoomEffect is true */}
         {currentLetter && showBoomEffect && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-30"></div>
+            <div className={`animate-ping absolute inline-flex h-full w-full rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-400'} opacity-30`}></div>
           </div>
         )}
         
@@ -207,12 +236,14 @@ const TypingGame = () => {
               {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imagePath={currentWordAndImage.image} />}
             </>
           ) : (
-            <div className="text-gray-400 text-2xl">Type a letter or number to begin!</div>
+            <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl`}>
+              Type a letter or number to begin!
+            </div>
           )}
         </div>
       </div>
       
-      <Keyboard onLetterClick={handleLetterPress} showNumbers={true} />
+      <Keyboard onLetterClick={handleLetterPress} showNumbers={true} darkMode={darkMode} />
     </div>
   );
 };

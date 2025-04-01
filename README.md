@@ -1,69 +1,52 @@
-# Welcome to your Lovable project
 
-## Project info
+# TypeJoy Kids - Interactive Typing Application
 
-**URL**: https://lovable.dev/projects/de25681c-a9ee-400e-940a-babf8290053e
+A fun and educational typing application for children to learn letters and numbers through interactive typing, animations, and visual/audio feedback.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Interactive keyboard and typing experience
+- Animated letters with sound effects
+- Voice pronunciation (male/female options)
+- Associated words and images for each letter
+- Dark/Light mode toggle
+- Responsive design for all devices
 
-**Use Lovable**
+## Image Path Structure
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/de25681c-a9ee-400e-940a-babf8290053e) and start prompting.
+The application expects images to be placed in the `/public/images/` directory with the following naming convention:
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+/images/[letter]-[number].jpg
 ```
 
-**Edit a file directly in GitHub**
+Where:
+- `[letter]` is the lowercase letter (a-z) or number (0-9)
+- `[number]` is a value from 1 to 10 representing the variation
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+For example:
+- `/images/a-1.jpg` (First image for letter 'A')
+- `/images/a-2.jpg` (Second image for letter 'A')
+- `/images/b-1.jpg` (First image for letter 'B')
+- `/images/1-1.jpg` (Image for number '1')
 
-**Use GitHub Codespaces**
+Each letter should have 10 different images (numbered 1-10) corresponding to the 10 different words for that letter.
+Each number only needs one image, but the naming convention still requires the -1 suffix.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Installing Images
 
-## What technologies are used for this project?
+1. Create a folder called `images` inside the `public` directory
+2. Name your images according to the convention described above
+3. Use JPG format for best compatibility (PNG is also supported)
+4. Recommended image size: 300x300 pixels
 
-This project is built with .
+If an image is missing, a placeholder will be shown.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Development
 
-## How can I deploy this project?
+This project is built with React, TypeScript, and Tailwind CSS.
 
-Simply open [Lovable](https://lovable.dev/projects/de25681c-a9ee-400e-940a-babf8290053e) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+```
+npm install   # Install dependencies
+npm run dev   # Start development server
+```

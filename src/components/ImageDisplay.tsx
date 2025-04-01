@@ -32,7 +32,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
           className="w-full h-full object-contain"
         />
       </div>
-      {/* Display the path for debugging purposes - can be removed in production */}
+      {/* Display the path for debugging purposes */}
       <div className="text-xs text-gray-400 mt-1">{imagePath}</div>
     </div>
   );
