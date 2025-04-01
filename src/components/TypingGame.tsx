@@ -110,13 +110,37 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     };
   }, [isAnimating]);
 
+  // Ensure speech synthesis voices are loaded
+  useEffect(() => {
+    // Create a function to initialize speech synthesis voices
+    const initVoices = () => {
+      if ('speechSynthesis' in window) {
+        // Force the browser to load voices
+        window.speechSynthesis.getVoices();
+      }
+    };
+
+    // Call it immediately
+    initVoices();
+
+    // Also set up an event listener for when voices change/load
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = initVoices;
+    }
+
+    // Clean up
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
   const speakLetter = (letter: string, word: string) => {
     // Using the Web Speech API
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
+      window.speechSynthesis.cancel();
       
       // For numbers, just speak the number itself, not the word
       const isNumber = /\d/.test(letter);
@@ -131,12 +155,15 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       // Select a voice based on the selected voice type
       const selectedVoice = voices.find(voice => 
         voiceType === 'male' 
-          ? voice.name.toLowerCase().includes('male') || !voice.name.toLowerCase().includes('female')
-          : voice.name.toLowerCase().includes('female')
+          ? voice.name.toLowerCase().includes('male') || 
+            (!voice.name.toLowerCase().includes('female') && !voice.name.toLowerCase().includes('woman'))
+          : voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')
       );
       
       if (selectedVoice) {
         utterance.voice = selectedVoice;
+      } else {
+        console.log("No appropriate voice found, using default voice");
       }
       
       // Set up event for when speech ends
@@ -146,13 +173,31 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         speechSynthesisRef.current = null;
       };
       
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
+        setShowBoomEffect(false);
+      };
+      
       // Fallback in case the speech event doesn't fire
       const estimatedSpeechTime = (letter.length + (isNumber ? 0 : word.length)) * 100; // rough estimate
       speechEndTimeoutRef.current = setTimeout(() => {
         setShowBoomEffect(false);
       }, Math.max(1500, estimatedSpeechTime)); // At least 1.5 seconds
       
-      window.speechSynthesis.speak(utterance);
+      // Explicitly try to speak and catch any errors
+      try {
+        window.speechSynthesis.speak(utterance);
+        console.log("Speaking:", textToSpeak);
+      } catch (error) {
+        console.error("Speech synthesis speak error:", error);
+        setShowBoomEffect(false);
+      }
+    } else {
+      console.log("Speech synthesis not supported in this browser");
+      // Still end the boom effect after a delay even if speech is not supported
+      speechEndTimeoutRef.current = setTimeout(() => {
+        setShowBoomEffect(false);
+      }, 1500);
     }
   };
 
