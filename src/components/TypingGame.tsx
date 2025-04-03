@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -80,7 +81,9 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioPool = useRef<HTMLAudioElement[]>([]);
+  const currentAudioIndex = useRef<number>(0);
+  const maxAudioPoolSize = 5; // Number of audio elements to keep in the pool
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -88,8 +91,12 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       console.warn("Speech synthesis not available in this browser");
     }
     
-    const audio = new Audio();
-    audioElementRef.current = audio;
+    // Initialize audio pool
+    for (let i = 0; i < maxAudioPoolSize; i++) {
+      const audio = new Audio();
+      audio.preload = 'auto';
+      audioPool.current.push(audio);
+    }
     
     const handleKeyPress = (event: KeyboardEvent) => {
       const key = event.key;
@@ -109,10 +116,11 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       if (speechSynthesisRef.current && speechAvailable) {
         window.speechSynthesis.cancel();
       }
-      if (audioElementRef.current) {
-        audioElementRef.current.pause();
-        audioElementRef.current.src = '';
-      }
+      // Clean up audio elements
+      audioPool.current.forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
     };
   }, [isAnimating, speechAvailable]);
 
@@ -140,33 +148,69 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   }, []);
 
   const playSound = () => {
-    if (audioElementRef.current) {
-      try {
-        audioElementRef.current.pause();
-        audioElementRef.current.currentTime = 0;
-        audioElementRef.current.src = '/sounds/pop-sound.mp3';
-        const playPromise = audioElementRef.current.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.catch((e) => {
-            console.error("Audio play failed with reusable element:", e);
-            audioElementRef.current!.src = '/sounds/pop-sound.wav';
-            audioElementRef.current!.play().catch((err) => {
-              console.error("Fallback audio also failed with reusable element:", err);
-              createBeepSound();
+    try {
+      // Get the next audio element from the pool
+      currentAudioIndex.current = (currentAudioIndex.current + 1) % maxAudioPoolSize;
+      const audioElement = audioPool.current[currentAudioIndex.current];
+      
+      // Reset the audio element
+      audioElement.oncanplaythrough = null;
+      audioElement.onerror = null;
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      
+      // Try MP3 first
+      audioElement.src = '/sounds/pop-sound.mp3';
+      
+      audioElement.oncanplaythrough = () => {
+        try {
+          const playPromise = audioElement.play();
+          
+          if (playPromise !== undefined) {
+            playPromise.catch((e) => {
+              console.error("Audio play failed:", e);
+              tryWebAudioFallback();
             });
-          });
+          }
+        } catch (e) {
+          console.error("Error during audio play:", e);
+          tryWebAudioFallback();
         }
-      } catch (error) {
-        console.error("Audio play error with reusable element:", error);
-        createBeepSound();
-      }
-    } else {
-      createBeepSound();
+      };
+      
+      audioElement.onerror = () => {
+        console.error("Error loading MP3, trying WAV fallback");
+        audioElement.src = '/sounds/pop-sound.wav';
+        
+        audioElement.oncanplaythrough = () => {
+          try {
+            const playPromise = audioElement.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.catch((e) => {
+                console.error("WAV fallback audio failed:", e);
+                tryWebAudioFallback();
+              });
+            }
+          } catch (e) {
+            console.error("Error during WAV audio play:", e);
+            tryWebAudioFallback();
+          }
+        };
+        
+        audioElement.onerror = () => {
+          console.error("WAV fallback also failed");
+          tryWebAudioFallback();
+        };
+      };
+      
+    } catch (error) {
+      console.error("Audio play error:", error);
+      tryWebAudioFallback();
     }
   };
 
-  const createBeepSound = () => {
+  const tryWebAudioFallback = () => {
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -199,65 +243,71 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     }
     
     try {
-      window.speechSynthesis.cancel();
-      
-      const isNumber = /\d/.test(letter);
-      const textToSpeak = isNumber ? letter : `${letter}. ${word}`;
-      
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      speechSynthesisRef.current = utterance;
-      
-      const voices = window.speechSynthesis.getVoices();
-      
-      let selectedVoice = voices.find(voice => 
-        voiceType === 'male' 
-          ? voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man')
-          : voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')
-      );
-      
-      if (!selectedVoice && voices.length > 0) {
-        console.log("No specific voice found, using first available voice");
-        selectedVoice = voices[0];
+      // Cancel any ongoing speech
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
       }
       
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      } else {
-        console.log("No voices available, using default voice");
-      }
-      
-      utterance.onstart = () => {
-        console.log("Speech started for: " + textToSpeak);
-      };
-      
-      utterance.onend = () => {
-        console.log("Speech ended normally for: " + textToSpeak);
-        setShowBoomEffect(false);
-        speechSynthesisRef.current = null;
-      };
-      
-      utterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event);
-        setShowBoomEffect(false);
-        speechSynthesisRef.current = null;
+      // Add a slight delay to ensure previous speech is fully cancelled
+      setTimeout(() => {
+        const isNumber = /\d/.test(letter);
+        const textToSpeak = isNumber ? letter : `${letter}. ${word}`;
         
-        if (event.error === 'interrupted') {
-          console.log("Speech was interrupted, this is normal when typing quickly");
-          setShowBoomEffect(false);
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        speechSynthesisRef.current = utterance;
+        
+        const voices = window.speechSynthesis.getVoices();
+        
+        let selectedVoice = voices.find(voice => 
+          voiceType === 'male' 
+            ? voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man')
+            : voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')
+        );
+        
+        if (!selectedVoice && voices.length > 0) {
+          console.log("No specific voice found, using first available voice");
+          selectedVoice = voices[0];
         }
-      };
-      
-      const estimatedSpeechTime = Math.max(1500, (letter.length + (isNumber ? 0 : word.length)) * 100);
-      if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
-      
-      speechEndTimeoutRef.current = setTimeout(() => {
-        setShowBoomEffect(false);
-      }, estimatedSpeechTime);
-      
-      window.speechSynthesis.speak(utterance);
-      console.log("Speaking:", textToSpeak);
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        } else {
+          console.log("No voices available, using default voice");
+        }
+        
+        utterance.onstart = () => {
+          console.log("Speech started for: " + textToSpeak);
+        };
+        
+        utterance.onend = () => {
+          console.log("Speech ended normally for: " + textToSpeak);
+          setShowBoomEffect(false);
+          speechSynthesisRef.current = null;
+        };
+        
+        utterance.onerror = (event) => {
+          console.error("Speech synthesis error:", event);
+          setShowBoomEffect(false);
+          speechSynthesisRef.current = null;
+          
+          if (event.error === 'interrupted') {
+            console.log("Speech was interrupted, this is normal when typing quickly");
+            setShowBoomEffect(false);
+          }
+        };
+        
+        const estimatedSpeechTime = Math.max(1500, (letter.length + (isNumber ? 0 : word.length)) * 100);
+        if (speechEndTimeoutRef.current) {
+          clearTimeout(speechEndTimeoutRef.current);
+        }
+        
+        speechEndTimeoutRef.current = setTimeout(() => {
+          setShowBoomEffect(false);
+        }, estimatedSpeechTime);
+        
+        window.speechSynthesis.speak(utterance);
+        console.log("Speaking:", textToSpeak);
+      }, 50); // Small delay to ensure previous speech is cancelled
     } catch (error) {
       console.error("Speech synthesis error:", error);
       setShowBoomEffect(false);
@@ -320,8 +370,6 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       </div>
       
       <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>
-        <audio ref={audioElementRef} preload="auto" style={{ display: 'none' }} />
-        
         {currentLetter && showBoomEffect && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className={`animate-ping absolute inline-flex h-full w-full rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-400'} opacity-30`}></div>

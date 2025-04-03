@@ -1,3 +1,4 @@
 
-// Binary WAV file content - this will be a base64 encoded audio file
-// Since we can't directly embed binary content, we'll create a base64 string that represents a simple pop sound
+// This is a placeholder for the pop-sound.wav file.
+// The actual WAV content should be a small WAV file with a pop sound.
+// You should add a real WAV file to your project at this path.

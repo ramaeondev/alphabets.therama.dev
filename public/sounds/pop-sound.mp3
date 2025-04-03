@@ -1,3 +1,4 @@
 
-// Binary MP3 file content - this will be a base64 encoded audio file
-// Since we can't directly embed binary content, we'll create a base64 string that represents a simple pop sound
+// This is a placeholder for the pop-sound.mp3 file.
+// The actual MP3 content should be a small MP3 file with a pop sound.
+// You should add a real MP3 file to your project at this path.
