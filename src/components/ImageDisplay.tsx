@@ -10,6 +10,18 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
   const [hasError, setHasError] = useState(false);
   const [loadAttempted, setLoadAttempted] = useState(false);
   
+  // Check if the word represents a number
+  const isNumeric = /^\d+$/.test(word) || ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'].includes(word);
+  
+  // If it's a number, don't display an image
+  if (isNumeric) {
+    return (
+      <div className="flex flex-col items-center mt-4">
+        <div className="text-xl font-semibold text-gray-700 mb-2">{word}</div>
+      </div>
+    );
+  }
+  
   // Attempt to use a fallback image if the primary one fails
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log("Image failed to load:", imagePath);
