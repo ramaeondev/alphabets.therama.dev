@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -254,16 +253,25 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       clearTimeout(speechEndTimeoutRef.current);
     }
     
-    // Play sound boom effect
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      try {
-        audioRef.current.play().catch(e => {
-          console.error("Audio play failed:", e);
+    // Play sound boom effect - Fixed with inline audio creation
+    try {
+      // Create a new Audio element for each sound play
+      const audioElement = new Audio('/sounds/pop-sound.mp3');
+      audioElement.volume = 0.5; // Set a reasonable volume
+      
+      // Play the sound
+      audioElement.play().catch(e => {
+        console.error("Audio play failed:", e);
+        
+        // Try an alternative sound format if the first one fails
+        const fallbackAudio = new Audio('/sounds/pop-sound.wav');
+        fallbackAudio.volume = 0.5;
+        fallbackAudio.play().catch(err => {
+          console.error("Fallback audio also failed:", err);
         });
-      } catch (error) {
-        console.error("Audio play error:", error);
-      }
+      });
+    } catch (error) {
+      console.error("Audio creation error:", error);
     }
     
     // First clear the current letter
@@ -304,8 +312,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       </div>
       
       <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>
-        {/* Sound effect audio element */}
-        <audio ref={audioRef} src="/pop-sound.mp3" preload="auto"></audio>
+        {/* We're not using the audio element ref anymore, but instead creating audio objects on demand */}
         
         {/* Background animation for sound boom - only shown when showBoomEffect is true */}
         {currentLetter && showBoomEffect && (
