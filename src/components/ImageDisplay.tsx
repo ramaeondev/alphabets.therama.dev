@@ -22,6 +22,32 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
     );
   }
   
+  // Generate a colorful background based on the word
+  const getColorForWord = (word: string) => {
+    const colors = [
+      'bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200', 
+      'bg-purple-200', 'bg-pink-200', 'bg-indigo-200', 'bg-teal-200'
+    ];
+    // Use the first character's code to select a color
+    const index = word.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  // Generate a placeholder image with the word
+  const generatePlaceholderImage = () => {
+    const bgColor = getColorForWord(word);
+    const letter = word.charAt(0).toUpperCase();
+    
+    return (
+      <div className={`w-full h-full flex items-center justify-center ${bgColor}`}>
+        <div className="text-center">
+          <div className="text-4xl font-bold">{letter}</div>
+          <div className="text-sm mt-1">{word}</div>
+        </div>
+      </div>
+    );
+  };
+  
   // Attempt to use a fallback image if the primary one fails
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log("Image failed to load:", imagePath);
@@ -36,7 +62,8 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
     } else {
       // If that also fails, show the error state
       setHasError(true);
-      e.currentTarget.src = "/placeholder.svg";
+      // Hide the image element since we'll show our generated placeholder
+      e.currentTarget.style.display = 'none';
     }
   };
 
@@ -44,24 +71,24 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
     <div className="flex flex-col items-center mt-4">
       <div className="text-xl font-semibold text-gray-700 mb-2">{word}</div>
       <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-purple-300 bg-white relative">
-        {hasError && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 p-2 text-center">
-            <p>
-              Place images in<br />
-              /public/images/{imagePath.split('/').pop()?.split('.')[0]}.jpg
-            </p>
-          </div>
+        {hasError && generatePlaceholderImage()}
+        
+        {!hasError && (
+          <img
+            src={imagePath}
+            alt={word}
+            onError={handleImageError}
+            className="w-full h-full object-contain"
+          />
         )}
-        <img
-          src={imagePath}
-          alt={word}
-          onError={handleImageError}
-          className="w-full h-full object-contain"
-        />
       </div>
       
-      {/* Only show path if there's an error, since it's more for debugging */}
-      {hasError && <div className="text-xs text-gray-400 mt-1">{imagePath}</div>}
+      {/* Only show path if there's an error, and it's in debug mode */}
+      {hasError && process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-gray-400 mt-1">
+          Place image at: {imagePath}
+        </div>
+      )}
     </div>
   );
 };
