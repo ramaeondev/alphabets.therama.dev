@@ -44,7 +44,7 @@ const Index = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center">
             <KeyboardIcon className="h-8 w-8 mr-2 text-white" />
-            <h1 className="text-2xl font-bold text-white">TypeJoy Kids</h1>
+            <h1 className="text-2xl font-bold text-white">Happy Letters</h1>
           </div>
           
           <div className="flex items-center space-x-2">
