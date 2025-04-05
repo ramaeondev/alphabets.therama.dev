@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 interface VoiceSelectorProps {
   voiceType: 'male' | 'female';
   onVoiceChange: (voice: 'male' | 'female') => void;
+  darkMode?: boolean;
 }
 
-const VoiceSelector: React.FC<VoiceSelectorProps> = ({ voiceType, onVoiceChange }) => {
+const VoiceSelector: React.FC<VoiceSelectorProps> = ({ voiceType, onVoiceChange, darkMode = false }) => {
   return (
     <div className="my-4">
-      <h3 className="text-lg font-medium mb-2">Choose a voice:</h3>
+      <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Choose a voice:</h3>
       <RadioGroup
         value={voiceType}
         onValueChange={(value) => onVoiceChange(value as 'male' | 'female')}
@@ -19,11 +20,11 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ voiceType, onVoiceChange 
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="female" id="female" />
-          <Label htmlFor="female">Female</Label>
+          <Label htmlFor="female" className={darkMode ? 'text-white' : 'text-gray-800'}>Female</Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="male" id="male" />
-          <Label htmlFor="male">Male</Label>
+          <Label htmlFor="male" className={darkMode ? 'text-white' : 'text-gray-800'}>Male</Label>
         </div>
       </RadioGroup>
     </div>

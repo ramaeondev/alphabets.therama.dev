@@ -49,6 +49,21 @@ const createItemsMapping = () => {
     '9': ['Nine'],
   };
   
+  // External image URL mapping - use these URLs as fallbacks
+  const imageUrls: Record<string, string[]> = {
+    'A': [
+      'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?q=80&w=300&h=300&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1557800636-894a64c1696f?q=80&w=300&h=300&auto=format&fit=crop',
+      // ...more URLs for A
+    ],
+    'B': [
+      'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?q=80&w=300&h=300&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1528825871115-3581a5387919?q=80&w=300&h=300&auto=format&fit=crop',
+      // ...more URLs for B
+    ],
+    // ...URLs for other letters
+  };
+  
   letters.split('').forEach(char => {
     const isNumber = /\d/.test(char);
     const words = isNumber 
@@ -81,9 +96,12 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
-  const audioPool = useRef<HTMLAudioElement[]>([]);
-  const currentAudioIndex = useRef<number>(0);
-  const maxAudioPoolSize = 5; // Number of audio elements to keep in the pool
+
+  // Create an audio context for fallback
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Pre-loaded audio elements
+  const popSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -91,12 +109,16 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       console.warn("Speech synthesis not available in this browser");
     }
     
-    // Initialize audio pool
-    for (let i = 0; i < maxAudioPoolSize; i++) {
-      const audio = new Audio();
-      audio.preload = 'auto';
-      audioPool.current.push(audio);
+    // Initialize audio context
+    if (window.AudioContext || (window as any).webkitAudioContext) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    
+    // Pre-load pop sound
+    const audio = new Audio();
+    audio.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3';
+    audio.load();
+    popSoundRef.current = audio;
     
     const handleKeyPress = (event: KeyboardEvent) => {
       const key = event.key;
@@ -116,11 +138,11 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       if (speechSynthesisRef.current && speechAvailable) {
         window.speechSynthesis.cancel();
       }
-      // Clean up audio elements
-      audioPool.current.forEach(audio => {
-        audio.pause();
-        audio.src = '';
-      });
+      
+      // Clean up audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+      }
     };
   }, [isAnimating, speechAvailable]);
 
@@ -149,70 +171,30 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
 
   const playSound = () => {
     try {
-      // Get the next audio element from the pool
-      currentAudioIndex.current = (currentAudioIndex.current + 1) % maxAudioPoolSize;
-      const audioElement = audioPool.current[currentAudioIndex.current];
-      
-      // Reset the audio element
-      audioElement.oncanplaythrough = null;
-      audioElement.onerror = null;
-      audioElement.pause();
-      audioElement.currentTime = 0;
-      
-      // Try MP3 first
-      audioElement.src = '/sounds/pop-sound.mp3';
-      
-      audioElement.oncanplaythrough = () => {
-        try {
-          const playPromise = audioElement.play();
-          
-          if (playPromise !== undefined) {
-            playPromise.catch((e) => {
-              console.error("Audio play failed:", e);
-              tryWebAudioFallback();
-            });
-          }
-        } catch (e) {
-          console.error("Error during audio play:", e);
-          tryWebAudioFallback();
-        }
-      };
-      
-      audioElement.onerror = () => {
-        console.error("Error loading MP3, trying WAV fallback");
-        audioElement.src = '/sounds/pop-sound.wav';
+      // Try using the pre-loaded audio
+      if (popSoundRef.current) {
+        // Reset
+        popSoundRef.current.currentTime = 0;
         
-        audioElement.oncanplaythrough = () => {
-          try {
-            const playPromise = audioElement.play();
-            
-            if (playPromise !== undefined) {
-              playPromise.catch((e) => {
-                console.error("WAV fallback audio failed:", e);
-                tryWebAudioFallback();
-              });
-            }
-          } catch (e) {
-            console.error("Error during WAV audio play:", e);
-            tryWebAudioFallback();
-          }
-        };
-        
-        audioElement.onerror = () => {
-          console.error("WAV fallback also failed");
+        // Play with error handling
+        popSoundRef.current.play().catch((error) => {
+          console.error("Audio play error:", error);
           tryWebAudioFallback();
-        };
-      };
-      
+        });
+      } else {
+        tryWebAudioFallback();
+      }
     } catch (error) {
-      console.error("Audio play error:", error);
+      console.error("Audio playback error:", error);
       tryWebAudioFallback();
     }
   };
 
   const tryWebAudioFallback = () => {
+    if (!audioContextRef.current) return;
+    
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = audioContextRef.current;
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
@@ -227,7 +209,6 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       oscillator.start();
       setTimeout(() => {
         oscillator.stop();
-        audioContext.close();
       }, 100);
     } catch (e) {
       console.error("Web Audio API also failed:", e);
@@ -256,6 +237,10 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         speechSynthesisRef.current = utterance;
         
+        utterance.rate = 0.9; // Slightly slower rate for better comprehension
+        utterance.pitch = 1.1; // Slightly higher pitch for children
+        utterance.volume = 1.0; // Maximum volume
+        
         const voices = window.speechSynthesis.getVoices();
         
         let selectedVoice = voices.find(voice => 
@@ -274,10 +259,6 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         } else {
           console.log("No voices available, using default voice");
         }
-        
-        utterance.onstart = () => {
-          console.log("Speech started for: " + textToSpeak);
-        };
         
         utterance.onend = () => {
           console.log("Speech ended normally for: " + textToSpeak);
@@ -366,7 +347,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           Type any letter or number on your keyboard or tap below!
         </p>
         
-        <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} />
+        <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} darkMode={darkMode} />
       </div>
       
       <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>

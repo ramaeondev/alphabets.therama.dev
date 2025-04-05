@@ -48,6 +48,41 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
     );
   };
   
+  // Get an Unsplash URL fallback for the letter
+  const getExternalImageFallback = (letter: string) => {
+    // Map of Unsplash image URLs for each letter
+    const imageMap: Record<string, string> = {
+      'A': 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?q=80&w=300&h=300&auto=format&fit=crop',
+      'B': 'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?q=80&w=300&h=300&auto=format&fit=crop',
+      'C': 'https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=300&h=300&auto=format&fit=crop',
+      'D': 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=300&h=300&auto=format&fit=crop',
+      'E': 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?q=80&w=300&h=300&auto=format&fit=crop',
+      'F': 'https://images.unsplash.com/photo-1439931444680-c2b6b49664fe?q=80&w=300&h=300&auto=format&fit=crop',
+      'G': 'https://images.unsplash.com/photo-1581337776174-861c1fce5f1d?q=80&w=300&h=300&auto=format&fit=crop',
+      'H': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=300&h=300&auto=format&fit=crop',
+      'I': 'https://images.unsplash.com/photo-1566041510639-8d95a2490bfb?q=80&w=300&h=300&auto=format&fit=crop',
+      'J': 'https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=300&h=300&auto=format&fit=crop',
+      'K': 'https://images.unsplash.com/photo-1482885500053-1ea373748313?q=80&w=300&h=300&auto=format&fit=crop',
+      'L': 'https://images.unsplash.com/photo-1583338917451-face2751d8d5?q=80&w=300&h=300&auto=format&fit=crop',
+      'M': 'https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=300&h=300&auto=format&fit=crop',
+      'N': 'https://images.unsplash.com/photo-1598153346810-860daa814c4b?q=80&w=300&h=300&auto=format&fit=crop',
+      'O': 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?q=80&w=300&h=300&auto=format&fit=crop',
+      'P': 'https://images.unsplash.com/photo-1552452518-a8f73c1a51ef?q=80&w=300&h=300&auto=format&fit=crop',
+      'Q': 'https://images.unsplash.com/photo-1567598508481-65a7a5553206?q=80&w=300&h=300&auto=format&fit=crop',
+      'R': 'https://images.unsplash.com/photo-1630412351297-af5445c5e3c4?q=80&w=300&h=300&auto=format&fit=crop',
+      'S': 'https://images.unsplash.com/photo-1534278931827-8a259344abe7?q=80&w=300&h=300&auto=format&fit=crop',
+      'T': 'https://images.unsplash.com/photo-1554456854-55a089fd4cb2?q=80&w=300&h=300&auto=format&fit=crop',
+      'U': 'https://images.unsplash.com/photo-1521453791919-a4d9a4668b28?q=80&w=300&h=300&auto=format&fit=crop',
+      'V': 'https://images.unsplash.com/photo-1534692499281-57d0f101789b?q=80&w=300&h=300&auto=format&fit=crop',
+      'W': 'https://images.unsplash.com/photo-1496450681664-3df85efbd29f?q=80&w=300&h=300&auto=format&fit=crop',
+      'X': 'https://images.unsplash.com/photo-1500479694472-551d1fb6258d?q=80&w=300&h=300&auto=format&fit=crop',
+      'Y': 'https://images.unsplash.com/photo-1577005193568-b159e059fa3e?q=80&w=300&h=300&auto=format&fit=crop',
+      'Z': 'https://images.unsplash.com/photo-1611145367651-0f2275e0814b?q=80&w=300&h=300&auto=format&fit=crop'
+    };
+    
+    return imageMap[letter] || null;
+  };
+  
   // Attempt to use a fallback image if the primary one fails
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log("Image failed to load:", imagePath);
@@ -56,9 +91,16 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
     if (!loadAttempted) {
       setLoadAttempted(true);
       
-      // Try to load a generic image for this letter (first character)
-      const letter = word.charAt(0).toLowerCase();
-      e.currentTarget.src = `/images/${letter}-1.jpg`;
+      // Try to load an external image for this letter
+      const letter = word.charAt(0).toUpperCase();
+      const externalUrl = getExternalImageFallback(letter);
+      
+      if (externalUrl) {
+        e.currentTarget.src = externalUrl;
+      } else {
+        // If no external URL, try a generic image for this letter
+        e.currentTarget.src = `/images/${letter.toLowerCase()}-1.jpg`;
+      }
     } else {
       // If that also fails, show the error state
       setHasError(true);
@@ -82,13 +124,6 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
           />
         )}
       </div>
-      
-      {/* Only show path if there's an error, and it's in debug mode */}
-      {hasError && process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-400 mt-1">
-          Place image at: {imagePath}
-        </div>
-      )}
     </div>
   );
 };

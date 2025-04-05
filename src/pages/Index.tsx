@@ -1,20 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
 import TypingGame from '@/components/TypingGame';
-import { MoonIcon, SunIcon, KeyboardIcon, ImageIcon } from 'lucide-react';
+import { MoonIcon, SunIcon, KeyboardIcon, ImageIcon, GithubIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
+  const [isDevMode, setIsDevMode] = useState(false);
 
   // Initialize dark mode based on system preference
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setDarkMode(isDark);
     updateTheme(isDark);
+    
+    // Check if we're in development mode
+    setIsDevMode(process.env.NODE_ENV === 'development');
   }, []);
 
   const updateTheme = (isDark: boolean) => {
@@ -48,17 +52,19 @@ const Index = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              asChild
-              className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}
-            >
-              <Link to="/image-placeholders">
-                <ImageIcon className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Images</span>
-              </Link>
-            </Button>
+            {isDevMode && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                asChild
+                className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}
+              >
+                <a href="/image-placeholders">
+                  <ImageIcon className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Images</span>
+                </a>
+              </Button>
+            )}
             <button 
               onClick={toggleDarkMode}
               className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}
@@ -70,11 +76,35 @@ const Index = () => {
         </div>
         
         <div className="w-full max-w-3xl mx-auto">
-          <h1 className="text-center text-4xl md:text-5xl font-bold text-white mb-8 drop-shadow-lg">
-            Happy Letters & Numbers
-          </h1>
           <TypingGame darkMode={darkMode} />
         </div>
+        
+        <footer className="mt-16 py-6 text-center">
+          <Separator className={darkMode ? "bg-gray-700" : "bg-white/20"} />
+          <div className="mt-6 text-sm">
+            <p className="mb-2">Developed by Rama Subba Reddy for his lovable daughter Jahnavi.</p>
+            <p className="mb-4">All rights reserved, 2025</p>
+            <div className="flex justify-center space-x-4">
+              <a 
+                href="https://github.com/ramasubbaiya" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center hover:underline"
+              >
+                <GithubIcon className="h-4 w-4 mr-1" />
+                <span>GitHub</span>
+              </a>
+              <a 
+                href="https://rama.cloudnotes.click" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                Portfolio
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
