@@ -6,9 +6,13 @@ import VoiceSelector from './VoiceSelector';
 import ImageDisplay from './ImageDisplay';
 import { useToast } from '@/hooks/use-toast';
 
+const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
+const API_ENDPOINT = "https://gyyhnbzekafnvxflhlni.functions.supabase.co/random-word-image";
+
+// Default word mapping as fallback if API fails
 const createItemsMapping = () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const mapping: Record<string, Array<{word: string, image: string}>> = {};
+  const mapping: Record<string, Array<{word: string, image_url: string}>> = {};
   
   const defaultWords: Record<string, string[]> = {
     'A': ['Apple', 'Ant', 'Astronaut', 'Airplane', 'Arrow', 'Avocado', 'Alligator', 'Anchor', 'Acorn', 'Axe'],
@@ -57,7 +61,7 @@ const createItemsMapping = () => {
     
     mapping[char] = words.map((word) => ({
       word,
-      image: `external-image-${char.toLowerCase()}`
+      image_url: `https://source.unsplash.com/featured/300x300?${encodeURIComponent(word)}`
     }));
   });
   
@@ -74,7 +78,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const [showBoomEffect, setShowBoomEffect] = useState<boolean>(false);
   const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
   const [letterCounter, setLetterCounter] = useState<Record<string, number>>({});
-  const [currentWordAndImage, setCurrentWordAndImage] = useState<{word: string, image: string} | null>(null);
+  const [currentWordAndImage, setCurrentWordAndImage] = useState<{word: string, image_url: string} | null>(null);
   const itemsMapping = useRef(createItemsMapping());
   const { toast } = useToast();
   const lastLetter = useRef<string | null>(null);
@@ -82,10 +86,40 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<boolean>(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioPool = useRef<HTMLAudioElement[]>([]);
   const currentAudioIndex = useRef(0);
+
+  const fetchWordAndImage = async (letter: string): Promise<{word: string, image_url: string} | null> => {
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_API_KEY}`
+        },
+        body: JSON.stringify({
+          letter: letter.toLowerCase(),
+          width: 300,
+          height: 300
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`API response for letter ${letter}:`, data);
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch word and image:", error);
+      setApiError(true);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -279,7 +313,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     }
   };
 
-  const handleLetterPress = (letter: string) => {
+  const handleLetterPress = async (letter: string) => {
     if (isAnimating) return;
     
     setIsAnimating(true);
@@ -290,8 +324,20 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     const newCount = (currentCount + 1) % 10;
     setLetterCounter(prev => ({...prev, [letter]: newCount}));
     
-    // Get the word and image for this letter
-    const wordAndImage = itemsMapping.current[letter][newCount];
+    // Try to fetch from API first
+    let wordAndImage = null;
+    try {
+      wordAndImage = await fetchWordAndImage(letter);
+    } catch (error) {
+      console.error("Error fetching from API:", error);
+    }
+    
+    // If API fails, use the default mapping
+    if (!wordAndImage) {
+      wordAndImage = itemsMapping.current[letter][newCount];
+      console.log("Using fallback word and image:", wordAndImage);
+    }
+    
     setCurrentWordAndImage(wordAndImage);
     
     if (speechEndTimeoutRef.current) {
@@ -340,11 +386,17 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           </div>
         )}
         
+        {apiError && (
+          <div className="absolute top-2 left-2 bg-yellow-500 text-white px-3 py-1 rounded-full text-xs">
+            Using backup images
+          </div>
+        )}
+        
         <div className="flex flex-col items-center justify-center h-full w-full">
           {currentLetter ? (
             <>
               <AnimatedLetter letter={currentLetter} />
-              {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imagePath={currentWordAndImage.image} />}
+              {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} />}
             </>
           ) : (
             <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl`}>
