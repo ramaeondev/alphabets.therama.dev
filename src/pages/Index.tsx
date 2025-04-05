@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import TypingGame from '@/components/TypingGame';
-import { MoonIcon, SunIcon, KeyboardIcon, ImageIcon, GithubIcon } from 'lucide-react';
+import { MoonIcon, SunIcon, GithubIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 const Index = () => {
@@ -45,34 +44,14 @@ const Index = () => {
       : 'bg-gradient-to-b from-sky-400 to-indigo-500 text-white'}`}>
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <KeyboardIcon className="h-8 w-8 mr-2 text-white" />
-            <h1 className="text-2xl font-bold text-white">Happy Letters</h1>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {isDevMode && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                asChild
-                className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}
-              >
-                <a href="/image-placeholders">
-                  <ImageIcon className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Images</span>
-                </a>
-              </Button>
-            )}
-            <button 
-              onClick={toggleDarkMode}
-              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-            </button>
-          </div>
+        <div className="flex justify-end items-center mb-6">
+          <button 
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+          </button>
         </div>
         
         <div className="w-full max-w-3xl mx-auto">

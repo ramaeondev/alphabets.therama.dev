@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -49,30 +48,15 @@ const createItemsMapping = () => {
     '9': ['Nine'],
   };
   
-  // External image URL mapping - use these URLs as fallbacks
-  const imageUrls: Record<string, string[]> = {
-    'A': [
-      'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?q=80&w=300&h=300&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1557800636-894a64c1696f?q=80&w=300&h=300&auto=format&fit=crop',
-      // ...more URLs for A
-    ],
-    'B': [
-      'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?q=80&w=300&h=300&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1528825871115-3581a5387919?q=80&w=300&h=300&auto=format&fit=crop',
-      // ...more URLs for B
-    ],
-    // ...URLs for other letters
-  };
-  
   letters.split('').forEach(char => {
     const isNumber = /\d/.test(char);
     const words = isNumber 
       ? Array(10).fill(defaultWords[char][0])
       : (defaultWords[char] || Array(10).fill(`${char}-word`));
     
-    mapping[char] = words.map((word, index) => ({
+    mapping[char] = words.map((word) => ({
       word,
-      image: `/images/${char.toLowerCase()}-${index + 1}.jpg`
+      image: `external-image-${char.toLowerCase()}`
     }));
   });
   
@@ -97,11 +81,9 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
 
-  // Create an audio context for fallback
   const audioContextRef = useRef<AudioContext | null>(null);
-
-  // Pre-loaded audio elements
-  const popSoundRef = useRef<HTMLAudioElement | null>(null);
+  const audioPool = useRef<HTMLAudioElement[]>([]);
+  const currentAudioIndex = useRef(0);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -109,16 +91,17 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
       console.warn("Speech synthesis not available in this browser");
     }
     
-    // Initialize audio context
     if (window.AudioContext || (window as any).webkitAudioContext) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     
-    // Pre-load pop sound
-    const audio = new Audio();
-    audio.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3';
-    audio.load();
-    popSoundRef.current = audio;
+    const audioCount = 5;
+    for (let i = 0; i < audioCount; i++) {
+      const audio = new Audio();
+      audio.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3';
+      audio.load();
+      audioPool.current.push(audio);
+    }
     
     const handleKeyPress = (event: KeyboardEvent) => {
       const key = event.key;
@@ -139,7 +122,6 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         window.speechSynthesis.cancel();
       }
       
-      // Clean up audio context
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(console.error);
       }
@@ -171,19 +153,13 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
 
   const playSound = () => {
     try {
-      // Try using the pre-loaded audio
-      if (popSoundRef.current) {
-        // Reset
-        popSoundRef.current.currentTime = 0;
-        
-        // Play with error handling
-        popSoundRef.current.play().catch((error) => {
-          console.error("Audio play error:", error);
-          tryWebAudioFallback();
-        });
-      } else {
+      const audioElement = audioPool.current[currentAudioIndex.current];
+      audioElement.currentTime = 0;
+      currentAudioIndex.current = (currentAudioIndex.current + 1) % audioPool.current.length;
+      audioElement.play().catch((error) => {
+        console.error("Audio play error:", error);
         tryWebAudioFallback();
-      }
+      });
     } catch (error) {
       console.error("Audio playback error:", error);
       tryWebAudioFallback();
@@ -224,12 +200,10 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     }
     
     try {
-      // Cancel any ongoing speech
       if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
         window.speechSynthesis.cancel();
       }
       
-      // Add a slight delay to ensure previous speech is fully cancelled
       setTimeout(() => {
         const isNumber = /\d/.test(letter);
         const textToSpeak = isNumber ? letter : `${letter}. ${word}`;
@@ -237,9 +211,9 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         speechSynthesisRef.current = utterance;
         
-        utterance.rate = 0.9; // Slightly slower rate for better comprehension
-        utterance.pitch = 1.1; // Slightly higher pitch for children
-        utterance.volume = 1.0; // Maximum volume
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 1.0;
         
         const voices = window.speechSynthesis.getVoices();
         
@@ -288,7 +262,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         
         window.speechSynthesis.speak(utterance);
         console.log("Speaking:", textToSpeak);
-      }, 50); // Small delay to ensure previous speech is cancelled
+      }, 50);
     } catch (error) {
       console.error("Speech synthesis error:", error);
       setShowBoomEffect(false);

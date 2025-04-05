@@ -19,11 +19,11 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({ voiceType, onVoiceChange,
         className="flex space-x-4 justify-center"
       >
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="female" id="female" />
+          <RadioGroupItem value="female" id="female" className="border-2" />
           <Label htmlFor="female" className={darkMode ? 'text-white' : 'text-gray-800'}>Female</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="male" id="male" />
+          <RadioGroupItem value="male" id="male" className="border-2" />
           <Label htmlFor="male" className={darkMode ? 'text-white' : 'text-gray-800'}>Male</Label>
         </div>
       </RadioGroup>
