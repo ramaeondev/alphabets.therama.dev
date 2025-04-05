@@ -62,7 +62,7 @@ const createItemsMapping = () => {
     
     mapping[char] = words.map((word) => ({
       word,
-      image_url: `https://source.unsplash.com/featured/300x300?${encodeURIComponent(word)}`
+      image_url: `/assets/images/${char}.jpg`, 
     }));
   });
   
