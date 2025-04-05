@@ -33,13 +33,13 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
               <span>Local</span>
             </div>
           </SelectItem>
-          <SelectItem value="unsplash">
+          <SelectItem value="unsplash" disabled>
             <div className="flex items-center gap-2">
               <GlobeIcon className="h-4 w-4" />
               <span>Unsplash</span>
             </div>
           </SelectItem>
-          <SelectItem value="flickr">
+          <SelectItem value="flickr" disabled>
             <div className="flex items-center gap-2">
               <CameraIcon className="h-4 w-4" />
               <span>Flickr</span>
