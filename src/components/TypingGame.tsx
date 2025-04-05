@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -80,6 +81,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioPool = useRef<HTMLAudioElement[]>([]);
@@ -238,12 +240,14 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           console.log("Speech ended normally for: " + textToSpeak);
           setShowBoomEffect(false);
           speechSynthesisRef.current = null;
+          setActiveKey(null);
         };
         
         utterance.onerror = (event) => {
           console.error("Speech synthesis error:", event);
           setShowBoomEffect(false);
           speechSynthesisRef.current = null;
+          setActiveKey(null);
           
           if (event.error === 'interrupted') {
             console.log("Speech was interrupted, this is normal when typing quickly");
@@ -258,6 +262,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         
         speechEndTimeoutRef.current = setTimeout(() => {
           setShowBoomEffect(false);
+          setActiveKey(null);
         }, estimatedSpeechTime);
         
         window.speechSynthesis.speak(utterance);
@@ -266,6 +271,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     } catch (error) {
       console.error("Speech synthesis error:", error);
       setShowBoomEffect(false);
+      setActiveKey(null);
       
       setTimeout(() => {
         setShowBoomEffect(false);
@@ -277,11 +283,14 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     if (isAnimating) return;
     
     setIsAnimating(true);
+    setActiveKey(letter);
     
-    const currentCount = letterCounter[letter] || 0;
+    // Initialize the counter if it doesn't exist
+    const currentCount = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
     const newCount = (currentCount + 1) % 10;
     setLetterCounter(prev => ({...prev, [letter]: newCount}));
     
+    // Get the word and image for this letter
     const wordAndImage = itemsMapping.current[letter][newCount];
     setCurrentWordAndImage(wordAndImage);
     
@@ -345,7 +354,12 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         </div>
       </div>
       
-      <Keyboard onLetterClick={handleLetterPress} showNumbers={true} darkMode={darkMode} />
+      <Keyboard 
+        onLetterClick={handleLetterPress} 
+        showNumbers={true} 
+        darkMode={darkMode} 
+        activeKey={activeKey}
+      />
     </div>
   );
 };

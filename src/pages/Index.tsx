@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import TypingGame from '@/components/TypingGame';
-import { MoonIcon, SunIcon, GithubIcon } from 'lucide-react';
+import { MoonIcon, SunIcon, GithubIcon, BookIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 
@@ -44,7 +44,12 @@ const Index = () => {
       : 'bg-gradient-to-b from-sky-400 to-indigo-500 text-white'}`}>
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <BookIcon className="h-8 w-8 mr-2" />
+            <h1 className="text-2xl md:text-3xl font-bold">Happy Letters</h1>
+          </div>
+          
           <button 
             onClick={toggleDarkMode}
             className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}

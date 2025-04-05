@@ -64,7 +64,23 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imagePath }) => {
       'camera': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=300&h=300&auto=format&fit=crop',
       'candle': 'https://images.unsplash.com/photo-1514534704298-58d2cb1411cc?q=80&w=300&h=300&auto=format&fit=crop',
       
-      // Fallback for other letters - add more as needed
+      // Add more word-specific mappings for other letters
+      // D words
+      'dog': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=300&h=300&auto=format&fit=crop',
+      'duck': 'https://images.unsplash.com/photo-1560742185-2b9c3fae6946?q=80&w=300&h=300&auto=format&fit=crop',
+      'dinosaur': 'https://images.unsplash.com/photo-1604164448130-d1df213c64eb?q=80&w=300&h=300&auto=format&fit=crop',
+      
+      // E words
+      'elephant': 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?q=80&w=300&h=300&auto=format&fit=crop',
+      'egg': 'https://images.unsplash.com/photo-1587486913049-53fc88980cfc?q=80&w=300&h=300&auto=format&fit=crop',
+      'eagle': 'https://images.unsplash.com/photo-1611689342806-0863700ce1e4?q=80&w=300&h=300&auto=format&fit=crop',
+      
+      // F words
+      'fish': 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?q=80&w=300&h=300&auto=format&fit=crop',
+      'frog': 'https://images.unsplash.com/photo-1560719887-fe3105fa1e55?q=80&w=300&h=300&auto=format&fit=crop',
+      'flower': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=300&h=300&auto=format&fit=crop',
+      
+      // More mappings for the rest of the alphabet would go here...
     };
 
     // Try to find a matching image URL for this specific word
