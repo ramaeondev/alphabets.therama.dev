@@ -86,7 +86,7 @@ const Index = () => {
             <p className="mb-4">All rights reserved, 2025</p>
             <div className="flex justify-center space-x-4">
               <a 
-                href="https://github.com/ramasubbaiya" 
+                href="https://github.com/ramaeondev/happy-letters" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center hover:underline"
