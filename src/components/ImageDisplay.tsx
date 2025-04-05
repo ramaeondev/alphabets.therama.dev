@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
+import { ImageSource } from './ImageSourceSelector';
 
 interface ImageDisplayProps {
   word: string;
   imageUrl: string;
+  imageSource: ImageSource;
 }
 
-const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl }) => {
+const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource }) => {
   const [hasError, setHasError] = useState(false);
   
   // Check if the word represents a number
@@ -47,9 +49,19 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl }) => {
     );
   };
   
+  // Get local image path if source is local
+  const getImageSrc = () => {
+    if (imageSource === 'local') {
+      // Convert word to lowercase and remove spaces for filename
+      const filename = word.toLowerCase().replace(/\s+/g, '_');
+      return `/images/${filename}.jpg`;
+    }
+    return imageUrl;
+  };
+  
   // Handle image loading error
   const handleImageError = () => {
-    console.log("Image failed to load:", imageUrl);
+    console.log("Image failed to load:", imageSource === 'local' ? `local image for ${word}` : imageUrl);
     setHasError(true);
   };
 
@@ -61,7 +73,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl }) => {
         
         {!hasError && (
           <img
-            src={imageUrl}
+            src={getImageSrc()}
             alt={word}
             onError={handleImageError}
             className="w-full h-full object-contain"

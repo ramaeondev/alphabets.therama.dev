@@ -4,6 +4,7 @@ import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
 import VoiceSelector from './VoiceSelector';
 import ImageDisplay from './ImageDisplay';
+import ImageSourceSelector, { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
 
 const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
@@ -77,6 +78,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showBoomEffect, setShowBoomEffect] = useState<boolean>(false);
   const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
+  const [imageSource, setImageSource] = useState<ImageSource>('local');
   const [letterCounter, setLetterCounter] = useState<Record<string, number>>({});
   const [currentWordAndImage, setCurrentWordAndImage] = useState<{word: string, image_url: string} | null>(null);
   const itemsMapping = useRef(createItemsMapping());
@@ -93,6 +95,12 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const currentAudioIndex = useRef(0);
 
   const fetchWordAndImage = async (letter: string): Promise<{word: string, image_url: string} | null> => {
+    if (imageSource === 'local') {
+      // Use local mapping for local source
+      const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
+      return itemsMapping.current[letter][letterIndex];
+    }
+    
     try {
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
@@ -103,7 +111,8 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         body: JSON.stringify({
           letter: letter.toLowerCase(),
           width: 300,
-          height: 300
+          height: 300,
+          source: imageSource // Include the image source in the request
         })
       });
 
@@ -324,15 +333,10 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     const newCount = (currentCount + 1) % 10;
     setLetterCounter(prev => ({...prev, [letter]: newCount}));
     
-    // Try to fetch from API first
-    let wordAndImage = null;
-    try {
-      wordAndImage = await fetchWordAndImage(letter);
-    } catch (error) {
-      console.error("Error fetching from API:", error);
-    }
+    // Fetch word and image based on selected source
+    let wordAndImage = await fetchWordAndImage(letter);
     
-    // If API fails, use the default mapping
+    // If the API/fetch fails, use the default mapping
     if (!wordAndImage) {
       wordAndImage = itemsMapping.current[letter][newCount];
       console.log("Using fallback word and image:", wordAndImage);
@@ -376,7 +380,10 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           Type any letter or number on your keyboard or tap below!
         </p>
         
-        <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} darkMode={darkMode} />
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
+          <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} darkMode={darkMode} />
+          <ImageSourceSelector imageSource={imageSource} onImageSourceChange={setImageSource} darkMode={darkMode} />
+        </div>
       </div>
       
       <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>
@@ -386,7 +393,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           </div>
         )}
         
-        {apiError && (
+        {apiError && imageSource !== 'local' && (
           <div className="absolute top-2 left-2 bg-yellow-500 text-white px-3 py-1 rounded-full text-xs">
             Using backup images
           </div>
@@ -396,7 +403,7 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
           {currentLetter ? (
             <>
               <AnimatedLetter letter={currentLetter} />
-              {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} />}
+              {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} imageSource={imageSource} />}
             </>
           ) : (
             <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl`}>

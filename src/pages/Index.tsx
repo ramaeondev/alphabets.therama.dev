@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import TypingGame from '@/components/TypingGame';
 import { MoonIcon, SunIcon, GithubIcon, BookIcon } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
 const Index = () => {
