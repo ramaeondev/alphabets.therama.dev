@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import SettingsMenu from '@/components/SettingsMenu';
 import { ImageSource } from '@/components/ImageSourceSelector';
+import { Helmet } from 'react-helmet';
 
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -43,6 +44,27 @@ const Index = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Happy Letters - Fun & Educational Typing Game for Kids</title>
+        <meta
+          name="description"
+          content="Happy Letters is a fun and educational typing game for children to learn letters and numbers with animations, images, and speech. Perfect for early learners!"
+        />
+        <meta property="og:title" content="Happy Letters - Fun Typing Game for Kids" />
+        <meta
+          property="og:description"
+          content="Interactive typing game that helps kids learn letters, numbers, and words with visuals and audio feedback. Built with love for children."
+        />
+        <meta
+          property="og:image"
+          content="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1470&h=600&auto=format&fit=crop"
+        />
+        <meta property="og:url" content="https://happyletters.cloudnotes.click" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <html lang="en" />
+      </Helmet>
     <div className={`min-h-screen transition-colors duration-300 ${darkMode 
       ? 'bg-gradient-to-b from-gray-900 to-indigo-900 text-white' 
       : 'bg-gradient-to-b from-sky-400 to-indigo-500 text-white'}`}>
@@ -109,6 +131,7 @@ const Index = () => {
         </footer>
       </div>
     </div>
+    </>
   );
 };
 
