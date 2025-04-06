@@ -12,11 +12,15 @@ import ReactGA from "react-ga4";
 // ✅ Initialize once (safe to do here)
 ReactGA.initialize("G-CM7QGS0GKG");
 
-const usePageTracking = () => {
+// Move this component INSIDE the Router context
+const PageTracker = () => {
   const location = useLocation();
+  
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: location.pathname });
   }, [location]);
+  
+  return null;
 };
 
 const queryClient = new QueryClient();
@@ -32,14 +36,14 @@ const DevOnlyRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  usePageTracking(); // ✅ moved inside App component
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          {/* Place the PageTracker here, inside the Router context */}
+          <PageTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route
