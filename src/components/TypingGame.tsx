@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
 const API_ENDPOINT = "https://gyyhnbzekafnvxflhlni.functions.supabase.co/random-word-image";
 
-// Default word mapping as fallback if API fails
 const createItemsMapping = () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const mapping: Record<string, Array<{word: string, image_url: string}>> = {};
@@ -407,13 +406,13 @@ const TypingGame: React.FC<TypingGameProps> = ({
 
   return (
     <div className={`${bgColor} rounded-2xl shadow-2xl p-6 md:p-8 transition-colors duration-300`}>
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Type any letter or number on your keyboard or tap below!
         </p>
       </div>
       
-      <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>
+      <div className={`flex flex-col items-center h-80 md:h-96 mb-6 ${darkMode ? 'bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900' : 'bg-gradient-to-r from-purple-100 via-pink-100 to-indigo-100'} rounded-xl overflow-hidden relative`}>
         {currentLetter && showBoomEffect && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className={`animate-ping absolute inline-flex h-full w-full rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-400'} opacity-30`}></div>
@@ -426,15 +425,18 @@ const TypingGame: React.FC<TypingGameProps> = ({
           </div>
         )}
         
-        <div className="flex flex-col items-center justify-center h-full w-full">
+        <div className="flex flex-col items-center justify-center h-full w-full p-4">
           {currentLetter ? (
-            <>
+            <div className="flex flex-col items-center w-full">
               <AnimatedLetter letter={currentLetter} />
               {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} imageSource={imageSource} />}
-            </>
+            </div>
           ) : (
-            <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl`}>
-              Type a letter or number to begin!
+            <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl flex flex-col items-center justify-center h-full`}>
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-r from-purple-300 to-pink-300 dark:from-purple-700 dark:to-pink-700 animate-pulse mb-4 flex items-center justify-center">
+                <span className="text-3xl">?</span>
+              </div>
+              <p>Type a letter or number to begin!</p>
             </div>
           )}
         </div>

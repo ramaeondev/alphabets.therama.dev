@@ -17,8 +17,10 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   // If it's a number, don't display an image
   if (isNumeric) {
     return (
-      <div className="flex flex-col items-center mt-4">
-        <div className="text-xl font-semibold text-gray-700 mb-2">{word}</div>
+      <div className="flex flex-col items-center mt-2">
+        <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          {word}
+        </div>
       </div>
     );
   }
@@ -40,7 +42,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
     const letter = word.charAt(0).toUpperCase();
     
     return (
-      <div className={`w-full h-full flex items-center justify-center ${bgColor}`}>
+      <div className={`w-full h-full flex items-center justify-center ${bgColor} rounded-lg`}>
         <div className="text-center">
           <div className="text-4xl font-bold">{letter}</div>
           <div className="text-sm mt-1">{word}</div>
@@ -52,8 +54,6 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   // Get image path based on source
   const getImageSrc = () => {
     if (imageSource === 'local') {
-      // For local images, use the direct filename without a path prefix
-      // The images are directly in the public/images folder with the exact word name
       return `/images/${word}.jpg`;
     }
     return imageUrl;
@@ -66,9 +66,11 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   };
 
   return (
-    <div className="flex flex-col items-center mt-4">
-      <div className="text-xl font-semibold text-gray-700 mb-2">{word}</div>
-      <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-purple-300 bg-white relative">
+    <div className="flex flex-col items-center mt-2">
+      <div className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+        {word}
+      </div>
+      <div className="w-40 h-40 md:w-52 md:h-52 rounded-xl overflow-hidden border-2 border-purple-300 bg-white relative shadow-lg transform transition-transform hover:scale-105">
         {hasError && generatePlaceholderImage()}
         
         {!hasError && (
@@ -76,7 +78,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
             src={getImageSrc()}
             alt={word}
             onError={handleImageError}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         )}
       </div>
