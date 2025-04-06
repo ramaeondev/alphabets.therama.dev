@@ -49,12 +49,12 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
     );
   };
   
-  // Get local image path if source is local
+  // Get image path based on source
   const getImageSrc = () => {
     if (imageSource === 'local') {
-      // Convert word to lowercase for filename
-      const filename = word.toLowerCase().replace(/\s+/g, '_');
-      return `/images/${filename}.jpg`;
+      // For local images, use the direct filename without a path prefix
+      // The images are directly in the public/images folder with the exact word name
+      return `/images/${word}.jpg`;
     }
     return imageUrl;
   };
