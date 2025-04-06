@@ -26,7 +26,7 @@ const AnimatedLetter: React.FC<AnimatedLetterProps> = ({ letter }) => {
   const [letterColor] = useState(getRandomColor());
   
   return (
-    <div className="relative flex items-center justify-center w-full h-32 md:h-40">
+    <div className="relative flex items-center justify-center w-full h-40 md:h-52">
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-r from-purple-200 to-pink-200 dark:from-purple-900 dark:to-pink-800 opacity-60 animate-pulse"></div>
       </div>

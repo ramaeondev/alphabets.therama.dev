@@ -276,15 +276,22 @@ const TypingGame: React.FC<TypingGameProps> = ({
         
         if (voiceType === 'male') {
           selectedVoice = voices.find(voice => 
-            voice.name.toLowerCase().includes('male') || 
-            voice.name.toLowerCase().includes('david') ||
-            voice.name.toLowerCase().includes('james') ||
-            voice.name.toLowerCase().includes('paul') ||
-            voice.name.toLowerCase().includes('thomas') ||
-            voice.name.toLowerCase().includes('daniel') ||
-            voice.name.toLowerCase().includes('guy') ||
-            voice.name.toLowerCase().includes('man')
+            voice.name.toLowerCase().includes('eddy') && 
+            voice.lang === 'en-US'
           );
+          
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => 
+              voice.name.toLowerCase().includes('male') || 
+              voice.name.toLowerCase().includes('david') ||
+              voice.name.toLowerCase().includes('james') ||
+              voice.name.toLowerCase().includes('paul') ||
+              voice.name.toLowerCase().includes('thomas') ||
+              voice.name.toLowerCase().includes('daniel') ||
+              voice.name.toLowerCase().includes('guy') ||
+              voice.name.toLowerCase().includes('man')
+            );
+          }
         } else {
           selectedVoice = voices.find(voice => 
             voice.name.toLowerCase().includes('female') || 
@@ -412,7 +419,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
         </p>
       </div>
       
-      <div className={`flex flex-col items-center h-80 md:h-96 mb-6 ${darkMode ? 'bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900' : 'bg-gradient-to-r from-purple-100 via-pink-100 to-indigo-100'} rounded-xl overflow-hidden relative`}>
+      <div className={`mb-6 ${darkMode ? 'bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900' : 'bg-gradient-to-r from-purple-100 via-pink-100 to-indigo-100'} rounded-xl overflow-hidden relative`}>
         {currentLetter && showBoomEffect && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className={`animate-ping absolute inline-flex h-full w-full rounded-full ${darkMode ? 'bg-purple-600' : 'bg-purple-400'} opacity-30`}></div>
@@ -425,14 +432,18 @@ const TypingGame: React.FC<TypingGameProps> = ({
           </div>
         )}
         
-        <div className="flex flex-col items-center justify-center h-full w-full p-4">
+        <div className="flex flex-col md:flex-row md:items-stretch w-full p-4">
           {currentLetter ? (
-            <div className="flex flex-col items-center w-full">
-              <AnimatedLetter letter={currentLetter} />
-              {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} imageSource={imageSource} />}
-            </div>
+            <>
+              <div className="md:w-1/2 flex items-center justify-center">
+                <AnimatedLetter letter={currentLetter} />
+              </div>
+              <div className="md:w-1/2 flex items-center justify-center">
+                {currentWordAndImage && <ImageDisplay word={currentWordAndImage.word} imageUrl={currentWordAndImage.image_url} imageSource={imageSource} />}
+              </div>
+            </>
           ) : (
-            <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl flex flex-col items-center justify-center h-full`}>
+            <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} text-2xl flex flex-col items-center justify-center h-60 w-full`}>
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-r from-purple-300 to-pink-300 dark:from-purple-700 dark:to-pink-700 animate-pulse mb-4 flex items-center justify-center">
                 <span className="text-3xl">?</span>
               </div>

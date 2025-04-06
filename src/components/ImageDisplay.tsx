@@ -17,7 +17,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   // If it's a number, don't display an image
   if (isNumeric) {
     return (
-      <div className="flex flex-col items-center mt-2">
+      <div className="flex items-center mt-2 justify-center">
         <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
           {word}
         </div>
@@ -66,11 +66,11 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   };
 
   return (
-    <div className="flex flex-col items-center mt-2">
-      <div className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+    <div className="flex flex-col items-center">
+      <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
         {word}
       </div>
-      <div className="w-40 h-40 md:w-52 md:h-52 rounded-xl overflow-hidden border-2 border-purple-300 bg-white relative shadow-lg transform transition-transform hover:scale-105">
+      <div className="w-full h-40 md:h-52 rounded-xl overflow-hidden border-2 border-purple-300 bg-white relative shadow-lg transform transition-transform hover:scale-105">
         {hasError && generatePlaceholderImage()}
         
         {!hasError && (
@@ -78,7 +78,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
             src={getImageSrc()}
             alt={word}
             onError={handleImageError}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain" // Changed from object-cover to object-contain to prevent cropping
           />
         )}
       </div>
