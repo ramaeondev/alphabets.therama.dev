@@ -23,10 +23,10 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
         <span className="text-sm">Image Source:</span>
       </div>
       <Select value={imageSource} onValueChange={(value) => onImageSourceChange(value as ImageSource)}>
-        <SelectTrigger className={`w-32 ml-2 h-8 text-sm ${darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white'}`}>
+        <SelectTrigger className={`w-32 ml-2 h-8 text-sm ${darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}>
           <SelectValue placeholder="Select source" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className={darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}>
           <SelectItem value="local">
             <div className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />

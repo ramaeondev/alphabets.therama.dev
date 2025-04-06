@@ -52,7 +52,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   // Get local image path if source is local
   const getImageSrc = () => {
     if (imageSource === 'local') {
-      // Convert word to lowercase and remove spaces for filename
+      // Convert word to lowercase for filename
       const filename = word.toLowerCase().replace(/\s+/g, '_');
       return `/images/${filename}.jpg`;
     }

@@ -2,9 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
-import VoiceSelector from './VoiceSelector';
 import ImageDisplay from './ImageDisplay';
-import ImageSourceSelector, { ImageSource } from './ImageSourceSelector';
+import { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
 
 const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
@@ -71,14 +70,18 @@ const createItemsMapping = () => {
 
 interface TypingGameProps {
   darkMode?: boolean;
+  voiceType: 'male' | 'female';
+  imageSource: ImageSource;
 }
 
-const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
+const TypingGame: React.FC<TypingGameProps> = ({ 
+  darkMode = false, 
+  voiceType,
+  imageSource
+}) => {
   const [currentLetter, setCurrentLetter] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [showBoomEffect, setShowBoomEffect] = useState<boolean>(false);
-  const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
-  const [imageSource, setImageSource] = useState<ImageSource>('local');
   const [letterCounter, setLetterCounter] = useState<Record<string, number>>({});
   const [currentWordAndImage, setCurrentWordAndImage] = useState<{word: string, image_url: string} | null>(null);
   const itemsMapping = useRef(createItemsMapping());
@@ -95,6 +98,15 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
   const currentAudioIndex = useRef(0);
 
   const fetchWordAndImage = async (letter: string): Promise<{word: string, image_url: string} | null> => {
+    // For numbers, don't call the API
+    const isNumber = /\d/.test(letter);
+    
+    if (isNumber) {
+      // Use the default word mapping for numbers
+      const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
+      return itemsMapping.current[letter][letterIndex];
+    }
+    
     if (imageSource === 'local') {
       // Use local mapping for local source
       const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
@@ -126,7 +138,10 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     } catch (error) {
       console.error("Failed to fetch word and image:", error);
       setApiError(true);
-      return null;
+      
+      // Use the default word mapping on error
+      const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
+      return itemsMapping.current[letter][letterIndex];
     }
   };
 
@@ -334,15 +349,11 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
     setLetterCounter(prev => ({...prev, [letter]: newCount}));
     
     // Fetch word and image based on selected source
-    let wordAndImage = await fetchWordAndImage(letter);
+    const wordAndImage = await fetchWordAndImage(letter);
     
-    // If the API/fetch fails, use the default mapping
-    if (!wordAndImage) {
-      wordAndImage = itemsMapping.current[letter][newCount];
-      console.log("Using fallback word and image:", wordAndImage);
+    if (wordAndImage) {
+      setCurrentWordAndImage(wordAndImage);
     }
-    
-    setCurrentWordAndImage(wordAndImage);
     
     if (speechEndTimeoutRef.current) {
       clearTimeout(speechEndTimeoutRef.current);
@@ -379,11 +390,6 @@ const TypingGame: React.FC<TypingGameProps> = ({ darkMode = false }) => {
         <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Type any letter or number on your keyboard or tap below!
         </p>
-        
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
-          <VoiceSelector voiceType={voiceType} onVoiceChange={setVoiceType} darkMode={darkMode} />
-          <ImageSourceSelector imageSource={imageSource} onImageSourceChange={setImageSource} darkMode={darkMode} />
-        </div>
       </div>
       
       <div className={`flex flex-col items-center h-80 md:h-96 mb-8 ${darkMode ? 'bg-gradient-to-r from-gray-900 to-indigo-900' : 'bg-gradient-to-r from-purple-100 to-pink-100'} rounded-xl overflow-hidden relative`}>

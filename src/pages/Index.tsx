@@ -4,9 +4,13 @@ import TypingGame from '@/components/TypingGame';
 import { MoonIcon, SunIcon, GithubIcon, BookIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import SettingsMenu from '@/components/SettingsMenu';
+import { ImageSource } from '@/components/ImageSourceSelector';
 
 const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
+  const [imageSource, setImageSource] = useState<ImageSource>('local');
   const { toast } = useToast();
   const [isDevMode, setIsDevMode] = useState(false);
 
@@ -50,17 +54,31 @@ const Index = () => {
             <h1 className="text-2xl md:text-3xl font-bold">Happy Letters</h1>
           </div>
           
-          <button 
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}
-            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center">
+            <SettingsMenu 
+              voiceType={voiceType}
+              onVoiceChange={setVoiceType}
+              imageSource={imageSource}
+              onImageSourceChange={setImageSource}
+              darkMode={darkMode}
+            />
+            
+            <button 
+              onClick={toggleDarkMode}
+              className={`p-2 ml-2 rounded-full ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-indigo-600 text-white'}`}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
         
         <div className="w-full max-w-3xl mx-auto">
-          <TypingGame darkMode={darkMode} />
+          <TypingGame 
+            darkMode={darkMode}
+            voiceType={voiceType}
+            imageSource={imageSource}
+          />
         </div>
         
         <footer className="mt-16 py-6 text-center">
