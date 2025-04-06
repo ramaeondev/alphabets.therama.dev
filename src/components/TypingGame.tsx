@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -98,17 +97,14 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const currentAudioIndex = useRef(0);
 
   const fetchWordAndImage = async (letter: string): Promise<{word: string, image_url: string} | null> => {
-    // For numbers, don't call the API
     const isNumber = /\d/.test(letter);
     
     if (isNumber) {
-      // Use the default word mapping for numbers
       const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
       return itemsMapping.current[letter][letterIndex];
     }
     
     if (imageSource === 'local') {
-      // Use local mapping for local source
       const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
       return itemsMapping.current[letter][letterIndex];
     }
@@ -124,7 +120,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
           letter: letter.toLowerCase(),
           width: 300,
           height: 300,
-          source: imageSource // Include the image source in the request
+          source: imageSource
         })
       });
 
@@ -139,7 +135,6 @@ const TypingGame: React.FC<TypingGameProps> = ({
       console.error("Failed to fetch word and image:", error);
       setApiError(true);
       
-      // Use the default word mapping on error
       const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
       return itemsMapping.current[letter][letterIndex];
     }
@@ -272,16 +267,43 @@ const TypingGame: React.FC<TypingGameProps> = ({
         speechSynthesisRef.current = utterance;
         
         utterance.rate = 0.9;
-        utterance.pitch = 1.1;
+        utterance.pitch = voiceType === 'male' ? 0.9 : 1.2;
         utterance.volume = 1.0;
         
         const voices = window.speechSynthesis.getVoices();
+        console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(', '));
         
-        let selectedVoice = voices.find(voice => 
-          voiceType === 'male' 
-            ? voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man')
-            : voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')
-        );
+        let selectedVoice;
+        
+        if (voiceType === 'male') {
+          selectedVoice = voices.find(voice => 
+            voice.name.toLowerCase().includes('male') || 
+            voice.name.toLowerCase().includes('david') ||
+            voice.name.toLowerCase().includes('james') ||
+            voice.name.toLowerCase().includes('paul') ||
+            voice.name.toLowerCase().includes('thomas') ||
+            voice.name.toLowerCase().includes('daniel') ||
+            voice.name.toLowerCase().includes('guy') ||
+            voice.name.toLowerCase().includes('man')
+          );
+        } else {
+          selectedVoice = voices.find(voice => 
+            voice.name.toLowerCase().includes('female') || 
+            voice.name.toLowerCase().includes('lisa') ||
+            voice.name.toLowerCase().includes('sarah') ||
+            voice.name.toLowerCase().includes('victoria') ||
+            voice.name.toLowerCase().includes('karen') || 
+            voice.name.toLowerCase().includes('woman') ||
+            voice.name.toLowerCase().includes('girl')
+          );
+        }
+        
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => 
+            (voice.lang === 'en-US' || voice.lang === 'en-GB') && 
+            (voiceType === 'male' ? !voice.name.toLowerCase().includes('female') : !voice.name.toLowerCase().includes('male'))
+          );
+        }
         
         if (!selectedVoice && voices.length > 0) {
           console.log("No specific voice found, using first available voice");
@@ -289,6 +311,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
         }
         
         if (selectedVoice) {
+          console.log(`Selected ${voiceType} voice: ${selectedVoice.name} (${selectedVoice.lang})`);
           utterance.voice = selectedVoice;
         } else {
           console.log("No voices available, using default voice");
@@ -324,7 +347,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
         }, estimatedSpeechTime);
         
         window.speechSynthesis.speak(utterance);
-        console.log("Speaking:", textToSpeak);
+        console.log("Speaking:", textToSpeak, "with voice type:", voiceType);
       }, 50);
     } catch (error) {
       console.error("Speech synthesis error:", error);
@@ -343,12 +366,10 @@ const TypingGame: React.FC<TypingGameProps> = ({
     setIsAnimating(true);
     setActiveKey(letter);
     
-    // Initialize the counter if it doesn't exist
     const currentCount = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
     const newCount = (currentCount + 1) % 10;
     setLetterCounter(prev => ({...prev, [letter]: newCount}));
     
-    // Fetch word and image based on selected source
     const wordAndImage = await fetchWordAndImage(letter);
     
     if (wordAndImage) {

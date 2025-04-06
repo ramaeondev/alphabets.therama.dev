@@ -32,7 +32,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
           <RadioGroupItem 
             value="female" 
             id={inMenu ? "female-menu" : "female"} 
-            className={darkMode ? "border-white bg-transparent" : "border-2 bg-white"}
+            className={`${darkMode ? "border-white bg-transparent" : "border-2 bg-white"}`}
           />
           <Label 
             htmlFor={inMenu ? "female-menu" : "female"} 
@@ -45,7 +45,7 @@ const VoiceSelector: React.FC<VoiceSelectorProps> = ({
           <RadioGroupItem 
             value="male" 
             id={inMenu ? "male-menu" : "male"} 
-            className={darkMode ? "border-white bg-transparent" : "border-2 bg-white"}
+            className={`${darkMode ? "border-white bg-transparent" : "border-2 bg-white"}`}
           />
           <Label 
             htmlFor={inMenu ? "male-menu" : "male"} 
