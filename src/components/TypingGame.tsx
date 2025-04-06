@@ -270,7 +270,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
         utterance.volume = 1.0;
         
         const voices = window.speechSynthesis.getVoices();
-        console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(', '));
+        // console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(', '));
         
         let selectedVoice;
         
