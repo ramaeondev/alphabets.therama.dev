@@ -1,122 +1,178 @@
 
-# Happy Letters - Interactive Typing Application for Kids
-
-A fun and educational typing application for children to learn letters and numbers through interactive typing, animations, and visual/audio feedback. This application is designed to help children learn the alphabet and numbers in an engaging way.
+# Happy Letters - Interactive Typing Game for Kids v1.0
 
 ![Happy Letters App](https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1470&h=600&auto=format&fit=crop)
 
-## Features
+An engaging educational web application designed to help children learn the alphabet and numbers through interactive typing, animations, and visual/audio feedback.
+
+## ✨ Features
 
 - **Interactive Keyboard**: Virtual and physical keyboard support for typing letters and numbers
-- **Visual Feedback**: Animated letters with colorful visual effects
-- **Audio Feedback**: Voice pronunciation with male/female voice options
-- **Educational Content**: Each letter is paired with 10 different words and images
+- **Visual Feedback**: Animated letters with colorful effects and backgrounds
+- **Audio Feedback**: Voice pronunciation with configurable male/female voice options
+- **Educational Content**: Each letter paired with 10 different words and images
+- **Side-by-Side Display**: Letter animation and related word/image shown together for better learning
 - **Accessibility**: Dark/Light mode toggle for comfortable viewing
 - **Responsive Design**: Works on all devices from mobile phones to desktops
-- **Real-time Feedback**: Visual keyboard feedback shows which key is pressed
-- **Speech Synthesis**: Uses the browser's speech synthesis API for pronunciation
+- **Real-time Feedback**: Visual keyboard feedback shows pressed keys
+- **Multi-source Images**: Support for various image providers (local, Openverse, Lorem Picsum, Pixabay, Pexels)
+- **Voice Options**: Choose between male ("Eddy") and female voice for pronunciation
 
-## How It Works
+## 🧠 How It Works
 
-1. **Type or Click**: Use your keyboard or click/tap the on-screen keys
+1. **Type or Click**: Use your keyboard or tap the on-screen keys
 2. **See & Hear**: Watch the animated letter appear and hear its pronunciation
-3. **Learn Words**: For each letter, see a related word and image
+3. **Learn Words**: For each letter, see a related word and image displayed side-by-side
 4. **Explore**: Each letter cycles through 10 different words when pressed repeatedly
 
-## Technical Implementation
+## 🔧 Technical Implementation
 
-### Components Structure
+### Component Structure
 
-- `TypingGame`: Main component that manages the game state and logic
+- `TypingGame`: Main component managing the game state and logic
 - `Keyboard`: Virtual keyboard component with interactive keys
 - `AnimatedLetter`: Handles letter animations and visual effects
-- `ImageDisplay`: Manages image display for each word
-- `VoiceSelector`: Allows switching between male and female voices
+- `ImageDisplay`: Manages image display for each word with fallback mechanisms
+- `SettingsMenu`: Configurable options for voice type and image sources
+- `VoiceSelector`: Component to switch between male and female voices
+- `ImageSourceSelector`: Component to select different image providers
 
 ### Technologies Used
 
-- **React**: For building the UI components
+- **React (v18.3)**: For building the UI components
 - **TypeScript**: For type safety and better code organization
 - **Tailwind CSS**: For responsive styling and design
 - **Speech Synthesis API**: For letter and word pronunciation
-- **Unsplash API**: For high-quality word-related images
+- **React Router DOM (v6.26)**: For application routing
+- **Shadcn/UI**: For UI component library
+- **Lucide React**: For icon components
+- **React Helmet**: For SEO optimization
+- **React GA4**: For Google Analytics integration
 
-### Key Features Explained
+### API Integrations
 
-#### Speech Synthesis
+- **Supabase Edge Functions**: For fetching word and image data
+- **Image APIs**:
+  - Local image library (400+ word-related images)
+  - Openverse API
+  - Lorem Picsum API
+  - Pixabay API
+  - Pexels API
+  - (Coming soon: Unsplash API, Flickr API)
 
-The application uses the browser's native Speech Synthesis API to pronounce letters and words. Users can choose between male and female voices.
+### SEO & Analytics
+
+- **Google Analytics 4**: Integrated for page tracking and user behavior analytics
+- **Meta Tags**: Comprehensive set of meta tags for SEO optimization
+  - Open Graph tags for social media sharing
+  - Twitter Card tags for Twitter sharing
+  - Structured data for educational app schema
+- **Helmet Integration**: Dynamic title and meta tag management
+
+## 🚀 Key Features Explained
+
+### Speech Synthesis
+
+The application uses the browser's native Speech Synthesis API to pronounce letters and words with configurable voice options:
 
 ```typescript
 const speakLetter = (letter: string, word: string) => {
-  const utterance = new SpeechSynthesisUtterance(`${letter}. ${word}`);
-  utterance.voice = selectedVoice;
-  window.speechSynthesis.speak(utterance);
+  try {
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    
+    // Voice selection logic
+    const voices = window.speechSynthesis.getVoices();
+    let selectedVoice;
+    
+    if (voiceType === 'male') {
+      selectedVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('eddy') && 
+        voice.lang === 'en-US'
+      );
+      // Fallback logic for male voices
+    } else {
+      // Female voice selection logic
+    }
+    
+    utterance.voice = selectedVoice;
+    utterance.rate = 0.9;
+    utterance.pitch = voiceType === 'male' ? 0.9 : 1.2;
+    
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("Speech synthesis error:", error);
+  }
 };
 ```
 
-#### Image Management
+### Dynamic Image Management
 
-Images are dynamically fetched from Unsplash based on the word being displayed. The application maintains a mapping between words and image URLs.
+Images are sourced from multiple providers with robust fallback mechanisms:
 
 ```typescript
-const getExternalImageUrl = (word: string) => {
-  // Try to find a matching image URL for this specific word
-  if (wordImageMap[word.toLowerCase()]) {
-    return wordImageMap[word.toLowerCase()];
+const fetchWordAndImage = async (letter: string) => {
+  if (imageSource === 'local') {
+    return localImageMap[letter][currentIndex];
   }
   
-  // Fall back to letter-based images
-  const letterImages = letterImageMap[word.charAt(0).toUpperCase()];
-  return letterImages[word.length % letterImages.length];
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SUPABASE_API_KEY}` },
+      body: JSON.stringify({ letter, source: imageSource })
+    });
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch image:", error);
+    return fallbackToLocalImage(letter);
+  }
 };
 ```
 
-#### Keyboard Animation
+### Responsive Layout
 
-The keyboard provides visual feedback when keys are pressed, enhancing the interactive experience.
+The application features a responsive side-by-side layout for optimal viewing across devices:
 
-```typescript
-<button
-  className={`${isActive 
-    ? "scale-110 ring-2 ring-offset-2 ring-purple-500" 
-    : "active:scale-95"}`}
->
-  {key}
-</button>
+```tsx
+<div className="flex flex-col md:flex-row md:items-stretch w-full p-4">
+  <div className="md:w-1/2 flex items-center justify-center">
+    <AnimatedLetter letter={currentLetter} />
+  </div>
+  <div className="md:w-1/2 flex items-center justify-center">
+    {currentWordAndImage && (
+      <ImageDisplay 
+        word={currentWordAndImage.word} 
+        imageUrl={currentWordAndImage.image_url}
+        imageSource={imageSource} 
+      />
+    )}
+  </div>
+</div>
 ```
 
-#### Word Cycling
+### Sound Effects
 
-Each letter cycles through 10 different words when pressed repeatedly, providing variety and increasing learning opportunities.
+The application includes audio feedback using a pool of audio elements for optimal performance:
 
 ```typescript
-const handleLetterPress = (letter: string) => {
-  const currentCount = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
-  const newCount = (currentCount + 1) % 10;
-  setLetterCounter(prev => ({...prev, [letter]: newCount}));
-  
-  const wordAndImage = itemsMapping.current[letter][newCount];
-  setCurrentWordAndImage(wordAndImage);
+const playSound = () => {
+  try {
+    const audioElement = audioPool.current[currentAudioIndex.current];
+    audioElement.currentTime = 0;
+    currentAudioIndex.current = (currentAudioIndex.current + 1) % audioPool.current.length;
+    audioElement.play().catch(tryWebAudioFallback);
+  } catch (error) {
+    tryWebAudioFallback();
+  }
 };
 ```
 
-## Development
+## 📱 Deployment
 
-This project is built with React, TypeScript, and Tailwind CSS.
+The app is currently deployed and accessible at [https://happyletters.cloudnotes.click](https://happyletters.cloudnotes.click)
 
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-```
-
-## Future Enhancements
+## 📈 Future Enhancements
 
 - Word pronunciation speed control
 - Custom word lists and images
@@ -126,17 +182,23 @@ npm run build
 - Parental controls and statistics
 - Downloadable content for offline usage
 
-## Credits
+## 🔒 Security
 
-- Developed by Rama Subba Reddy for his daughter Jahnavi
-- Images sourced from Unsplash
+- All API keys are properly secured
+- External API requests are proxied through Supabase Edge Functions
+- No user data collection beyond anonymous analytics
+
+## 👥 Credits
+
+- Developed by Rama Subba Reddy for his lovable daughter Jahnavi
+- Images sourced from multiple providers
 - Sound effects from MixKit
 
-## License
+## 📄 License
 
 All rights reserved, 2025
 
-## Links
+## 🔗 Links
 
 - [GitHub Repository](https://github.com/ramaeondev/happy-letters)
 - [Developer's Portfolio](https://rama.cloudnotes.click)
