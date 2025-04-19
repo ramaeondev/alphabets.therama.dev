@@ -6,7 +6,7 @@ import { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
 import { useWordSelection } from '@/contexts/WordSelectionContext';
 
-const API_ENDPOINT = "https://api.therama.dev/random-word-image";
+const API_ENDPOINT = "https://api.therama.dev/functions/v1/random-word-image";
 
 const createItemsMapping = () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
