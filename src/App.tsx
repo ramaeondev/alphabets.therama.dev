@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ImagePlaceholders from "./pages/ImagePlaceholders";
 import ReactGA from "react-ga4";
-
+import { WordSelectionProvider } from './contexts/WordSelectionContext';
 
 ReactGA.initialize("G-CM7QGS0GKG");
 
@@ -34,32 +34,32 @@ const DevOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   return isDevMode ? <>{children}</> : <Navigate to="/" />;
 };
 
-const App = () => {
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          {/* Place the PageTracker here, inside the Router context */}
-          <PageTracker />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route
-              path="/image-placeholders"
-              element={
-                <DevOnlyRoute>
-                  <ImagePlaceholders />
-                </DevOnlyRoute>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <WordSelectionProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <PageTracker />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route
+                path="/image-placeholders"
+                element={
+                  <DevOnlyRoute>
+                    <ImagePlaceholders />
+                  </DevOnlyRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </WordSelectionProvider>
   );
-};
+}
 
 export default App;

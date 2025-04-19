@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import { 
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/menubar";
 import VoiceSelector from './VoiceSelector';
 import ImageSourceSelector, { ImageSource } from './ImageSourceSelector';
+import { useWordSelection } from '@/contexts/WordSelectionContext';
 
 interface ImageSourceOption {
   id: string;
@@ -28,7 +28,6 @@ interface SettingsMenuProps {
   darkMode: boolean;
 }
 
-
 const SettingsMenu: React.FC<SettingsMenuProps> = ({
   voiceType,
   onVoiceChange,
@@ -38,6 +37,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
 }) => {
   const [imageSources, setImageSources] = useState<ImageSourceOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { useStaticWord, setUseStaticWord } = useWordSelection();
 
   useEffect(() => {
     const fetchImageSources = async () => {
@@ -112,6 +112,19 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 {source.name} {source.is_disabled && "(Coming Soon)"}
               </MenubarItem>
             ))
+          )}
+
+          {imageSource === 'local' && (
+            <>
+              <MenubarSeparator className={darkMode ? 'bg-gray-700' : 'bg-gray-200'} />
+              <MenubarLabel>Word Selection</MenubarLabel>
+              <MenubarItem 
+                onClick={() => setUseStaticWord(!useStaticWord)}
+                className={useStaticWord ? 'bg-primary text-primary-foreground' : ''}
+              >
+                {useStaticWord ? 'Static Word (A-Apple)' : 'Random Words'}
+              </MenubarItem>
+            </>
           )}
         </MenubarContent>
       </MenubarMenu>

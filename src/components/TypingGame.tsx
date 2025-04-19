@@ -4,6 +4,7 @@ import Keyboard from './Keyboard';
 import ImageDisplay from './ImageDisplay';
 import { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
+import { useWordSelection } from '@/contexts/WordSelectionContext';
 
 const API_ENDPOINT = "https://api.therama.dev/random-word-image";
 
@@ -89,6 +90,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const [speechAvailable, setSpeechAvailable] = useState<boolean>(true);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [apiError, setApiError] = useState<boolean>(false);
+  const { useStaticWord } = useWordSelection();
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioPool = useRef<HTMLAudioElement[]>([]);
@@ -103,6 +105,9 @@ const TypingGame: React.FC<TypingGameProps> = ({
     }
     
     if (imageSource === 'local') {
+      if (useStaticWord) {
+        return itemsMapping.current[letter][0];
+      }
       const letterIndex = letterCounter[letter] !== undefined ? letterCounter[letter] : 0;
       return itemsMapping.current[letter][letterIndex];
     }
