@@ -402,12 +402,6 @@ const TypingGame: React.FC<TypingGameProps> = ({
       if (wordAndImage) {
         speakLetter(letter, wordAndImage.word);
       }
-      
-      toast({
-        title: letter,
-        description: wordAndImage ? wordAndImage.word : '',
-        duration: 2000,
-      });
     }, 200);
   };
 
