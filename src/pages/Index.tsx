@@ -72,7 +72,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Happy Letters - Interactive Typing Game for Kids | Learn Alphabet & Numbers</title>
+        <title>Alphabets</title>
         <meta
           name="description"
           content="Happy Letters is a fun, interactive typing game for children to learn the alphabet, numbers, and words with animations, images, and speech feedback."
