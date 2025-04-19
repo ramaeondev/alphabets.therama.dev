@@ -43,7 +43,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
     const fetchImageSources = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('https://gyyhnbzekafnvxflhlni.supabase.co/functions/v1/get-image-sources', {
+        const response = await fetch('https://api.therama.dev/functions/v1/get-image-sources', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
