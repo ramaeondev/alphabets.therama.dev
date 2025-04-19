@@ -5,8 +5,7 @@ import ImageDisplay from './ImageDisplay';
 import { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
 
-const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
-const API_ENDPOINT = "https://gyyhnbzekafnvxflhlni.functions.supabase.co/random-word-image";
+const API_ENDPOINT = "https://api.therama.dev/random-word-image";
 
 const createItemsMapping = () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -112,8 +111,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_API_KEY}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           letter: letter.toLowerCase(),

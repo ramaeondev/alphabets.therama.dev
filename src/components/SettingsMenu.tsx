@@ -28,7 +28,6 @@ interface SettingsMenuProps {
   darkMode: boolean;
 }
 
-const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5eWhuYnpla2FmbnZ4ZmxobG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NTA0NTksImV4cCI6MjA1OTQyNjQ1OX0.J96DGREUC2NXn1WGC3wkhpr0JsCnBqjVHiQWq4yO3FI";
 
 const SettingsMenu: React.FC<SettingsMenuProps> = ({
   voiceType,
@@ -47,7 +46,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
         const response = await fetch('https://gyyhnbzekafnvxflhlni.supabase.co/functions/v1/get-image-sources', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${SUPABASE_API_KEY}`
+            'Content-Type': 'application/json',
           }
         });
 
