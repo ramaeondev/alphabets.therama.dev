@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import AnimatedLetter from './AnimatedLetter';
 import Keyboard from './Keyboard';
@@ -91,6 +92,8 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [apiError, setApiError] = useState<boolean>(false);
   const { useStaticWord } = useWordSelection();
+  const [speechErrors, setSpeechErrors] = useState<number>(0);
+  const speechErrorThreshold = useRef<number>(3);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioPool = useRef<HTMLAudioElement[]>([]);
@@ -208,6 +211,11 @@ const TypingGame: React.FC<TypingGameProps> = ({
     };
   }, []);
 
+  // Reset speech errors counter when voice type changes
+  useEffect(() => {
+    setSpeechErrors(0);
+  }, [voiceType]);
+
   const playSound = () => {
     try {
       const audioElement = audioPool.current[currentAudioIndex.current];
@@ -256,7 +264,18 @@ const TypingGame: React.FC<TypingGameProps> = ({
       return;
     }
     
+    // If we've encountered too many errors, don't try to speak
+    if (speechErrors >= speechErrorThreshold.current) {
+      console.warn("Speech synthesis disabled due to too many errors");
+      setTimeout(() => {
+        setShowBoomEffect(false);
+        setActiveKey(null);
+      }, 1500);
+      return;
+    }
+    
     try {
+      // Cancel any ongoing speech synthesis
       if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
         window.speechSynthesis.cancel();
       }
@@ -273,7 +292,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
         utterance.volume = 1.0;
         
         const voices = window.speechSynthesis.getVoices();
-        // console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(', '));
+        console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(', '));
         
         let selectedVoice;
         
@@ -331,6 +350,11 @@ const TypingGame: React.FC<TypingGameProps> = ({
           setShowBoomEffect(false);
           speechSynthesisRef.current = null;
           setActiveKey(null);
+          
+          // Reset error counter after successful speech
+          if (speechErrors > 0) {
+            setSpeechErrors(0);
+          }
         };
         
         utterance.onerror = (event) => {
@@ -339,8 +363,11 @@ const TypingGame: React.FC<TypingGameProps> = ({
           speechSynthesisRef.current = null;
           setActiveKey(null);
           
-          if (event.error === 'interrupted') {
-            console.log("Speech was interrupted, this is normal when typing quickly");
+          // Increment the error counter
+          setSpeechErrors(prev => prev + 1);
+          
+          if (event.error === 'interrupted' || event.error === 'canceled') {
+            console.log("Speech was interrupted/canceled, this is normal when typing quickly");
             setShowBoomEffect(false);
           }
         };
@@ -360,6 +387,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
       }, 50);
     } catch (error) {
       console.error("Speech synthesis error:", error);
+      setSpeechErrors(prev => prev + 1);
       setShowBoomEffect(false);
       setActiveKey(null);
       
@@ -414,6 +442,11 @@ const TypingGame: React.FC<TypingGameProps> = ({
         <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Type any letter or number on your keyboard or tap below!
         </p>
+        {speechErrors >= speechErrorThreshold.current && (
+          <p className="text-sm text-yellow-500 mt-2">
+            Speech synthesis disabled due to errors. Reload page to try again.
+          </p>
+        )}
       </div>
       
       <div className={`mb-6 ${darkMode ? 'bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900' : 'bg-gradient-to-r from-purple-100 via-pink-100 to-indigo-100'} rounded-xl overflow-hidden relative`}>
