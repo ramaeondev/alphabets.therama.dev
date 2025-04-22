@@ -1,5 +1,36 @@
+# Happy Letters - Interactive Typing Game for Kids v1.2.1
 
-# Happy Letters - Interactive Typing Game for Kids v1.0
+# 🛠️ Built With
+
+- **Framework**: React v18.3.1
+- **Build Tool**: Vite v5.4.1
+- **Language**: TypeScript v5.5.3
+- **Styling**: 
+  - Tailwind CSS v3.4.11
+  - shadcn/ui (Radix UI components)
+  - tailwindcss-animate v1.0.7
+
+### Core Dependencies
+
+- **Routing**: React Router DOM v6.26.2
+- **Form Handling**: React Hook Form v7.53.0
+- **Data Validation**: Zod v3.23.8
+- **Icons**: Lucide React v0.462.0
+- **Analytics**: React GA4 v2.1.0
+- **SEO**: React Helmet v6.1.0
+- **UI Components**:
+  - Radix UI primitives (v1.x - v2.x)
+  - React Day Picker v8.10.1
+  - Embla Carousel v8.3.0
+  - Sonner v1.5.0 (Toast notifications)
+
+### Development Tools
+
+- **Linting**: ESLint v9.9.0
+- **Type Checking**: TypeScript v5.5.3
+- **PostCSS**: v8.4.47
+- **Build**: Vite v5.4.1 with SWC plugin
+
 
 ![Happy Letters App](https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1470&h=600&auto=format&fit=crop)
 
@@ -62,12 +93,23 @@ An engaging educational web application designed to help children learn the alph
 
 ### SEO & Analytics
 
-- **Google Analytics 4**: Integrated for page tracking and user behavior analytics
+- **Google Analytics 4**: 
+  - Integrated using dynamic script injection for better performance
+  - Measurement ID: G-FHZ9Y2CCG2
+  - Tracks page views and user interactions
 - **Meta Tags**: Comprehensive set of meta tags for SEO optimization
   - Open Graph tags for social media sharing
+    - Title, description, image, and URL
+    - Site name: "Happy Letters"
   - Twitter Card tags for Twitter sharing
-  - Structured data for educational app schema
-- **Helmet Integration**: Dynamic title and meta tag management
+    - Uses large image card format
+  - HTML5 semantic elements for better accessibility
+  - Responsive viewport configuration
+  - Theme color support for dark/light modes
+- **Structured Data**: 
+  - Implementation of Schema.org SoftwareApplication type
+  - Includes pricing, rating, and educational application details
+  - Author information and application metadata
 
 ## 🚀 Key Features Explained
 
@@ -170,7 +212,7 @@ const playSound = () => {
 
 ## 📱 Deployment
 
-The app is currently deployed and accessible at [https://happyletters.cloudnotes.click](https://happyletters.cloudnotes.click)
+The app is currently deployed and accessible at [https://alphabets.therama.dev](https://alphabets.therama.dev)
 
 ## 📈 Future Enhancements
 
@@ -195,10 +237,12 @@ The app is currently deployed and accessible at [https://happyletters.cloudnotes
 - Sound effects from MixKit
 
 ## 📄 License
+MIT License - see the [LICENSE](LICENSE) file for details
 
 All rights reserved, 2025
 
 ## 🔗 Links
-
-- [GitHub Repository](https://github.com/ramaeondev/happy-letters)
-- [Developer's Portfolio](https://rama.cloudnotes.click)
+- [Live Demo](https://alphabets.therama.dev)
+- [GitHub Repository](https://github.com/ramaeondev/alphabets.therama.dev)
+- [Bug Report](https://github.com/ramaeondev/alphabets.therama.dev/issues)
+- [Developer's Portfolio](https://therama.dev)
