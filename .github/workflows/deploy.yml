@@ -49,33 +49,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_GLOBAL }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_GLOBAL }}
            
-      - name: Read package.json and POST to Projects table          
-        run: |
-            VERSION=$(jq -r '.version' package.json)
-            STATUS=$(jq -r '.status' package.json)
-            PROJECT_ID=$(jq -r '.project_id' package.json)
-            update_project_version=$(jq -r '.update_project_version' package.json)
-    
-            echo "Version: $VERSION"
-            echo "Status: $STATUS"
-            echo "Project ID: $PROJECT_ID"
-            echo "update_project_version: $update_project_version"
-    
-            RESPONSE=$(curl -s -X POST $update_project_version \
-              -H "Content-Type: application/json" \
-              -d '{
-                "project_id": "'"$PROJECT_ID"'",
-                "version": "'"$VERSION"'",
-                "status": "'"$STATUS"'"
-              }')
-    
-            echo "$RESPONSE" > deployment-status.json
-        
-      - name: Upload deployment status as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-status
-          path: deployment-status.json
+      - name: Post version to Supabase
+        uses: ramaeondev/therama.dev/.github/actions/post-project-version@master        
         
       - name: Build
         run: npm run build
