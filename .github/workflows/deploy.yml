@@ -30,12 +30,24 @@ jobs:
             npm cache clean --force
             npm install
       
-      - name: Copy README and package.json to public
+      - name: Copy and rename README.md + package.json to public/meta
         run: |
           mkdir -p public/meta
-          cp README.md public/meta/
+          REPO_NAME=$(basename $GITHUB_REPOSITORY)
+          cp README.md public/meta/${REPO_NAME}.md
           cp package.json public/meta/
-      
+          
+      - name: Upload renamed README to S3
+        uses: therama/github-actions/upload-to-s3@master
+        with:
+          source: public/meta/${{ github.repository }}.md
+          destination: readme/${{ github.repository }}.md
+          bucket: ${{ secrets.S3_UPLOAD_BUCKET }}
+          region: ${{ secrets.AWS_UPLOAD_REGION }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_GLOBAL }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_GLOBAL }}
+           
       - name: Read package.json and POST to Projects table          
         run: |
             VERSION=$(jq -r '.version' package.json)
@@ -85,34 +97,36 @@ jobs:
             
       - name: Log deployment to Supabase
         run: |
-              VERSION=$(jq -r '.version' package.json)
-              STATUS=$(jq -r '.status' package.json)
-              PROJECT_ID=$(jq -r '.project_id' package.json)
-              log_deployment=$(jq -r '.log_deployment' package.json)
-              COMMIT_MESSAGE=$(git log -1 --pretty=%B | sed 's/"/\\"/g')
-              
-              END_TIME=$(date +%s)
-              DURATION=$((END_TIME - START_TIME))
-              IS_SUCCESS=${{ job.status == 'success' && 'true' || 'false' }}
-              
-              # Create JSON payload with proper escaping
-              JSON_PAYLOAD=$(cat <<EOF
-              {
-                "project_id": "$PROJECT_ID",
-                "version": "$VERSION",
-                "status": "$STATUS",
-                "github_sha": "${{ github.sha }}",
-                "github_ref": "${{ github.ref }}",
-                "actor": "${{ github.actor }}",
-                "commit_message": "$COMMIT_MESSAGE",
-                "deployment_url": "https://apps.therama.dev/",
-                "duration_in_seconds": $DURATION,
-                "is_success": $IS_SUCCESS
-              }
-              EOF
-              )
-              
-              # Send the request with properly formatted JSON
-              curl -s -X POST "$log_deployment" \
-                -H "Content-Type: application/json" \
-                -d "$JSON_PAYLOAD"
+            VERSION=$(jq -r '.version' package.json)
+            STATUS=$(jq -r '.status' package.json)
+            PROJECT_ID=$(jq -r '.project_id' package.json)
+            log_deployment=$(jq -r '.log_deployment' package.json)
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B | sed 's/"/\\"/g')
+            HOME_PAGE=$(jq -r '.homepage' package.json)
+
+            END_TIME=$(date +%s)
+            DURATION=$((END_TIME - START_TIME))
+            IS_SUCCESS=${{ job.status == 'success' && 'true' || 'false' }}
+            
+            # Create JSON payload with proper escaping
+            JSON_PAYLOAD=$(cat <<EOF
+            {
+              "project_id": "$PROJECT_ID",
+              "version": "$VERSION",
+              "status": "$STATUS",
+              "github_sha": "${{ github.sha }}",
+              "github_ref": "${{ github.ref }}",
+              "actor": "${{ github.actor }}",
+              "commit_message": "$COMMIT_MESSAGE",
+              "deployment_url":  "$HOME_PAGE",
+              "duration_in_seconds": $DURATION,
+              "is_success": $IS_SUCCESS
+            }
+            EOF
+            )
+            
+            # Send the request with properly formatted JSON
+            curl -s -X POST "$log_deployment" \
+              -H "Content-Type: application/json" \
+              -d "$JSON_PAYLOAD"
+    
