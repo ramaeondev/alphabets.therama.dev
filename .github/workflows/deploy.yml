@@ -38,7 +38,7 @@ jobs:
           cp package.json public/meta/
           
       - name: Upload renamed README to S3
-        uses: therama/github-actions/upload-to-s3@master
+        uses: ramaeondev/therama.dev/.github/actions/upload-to-s3@master
         with:
           source: public/meta/${{ github.repository }}.md
           destination: readme/${{ github.repository }}.md
