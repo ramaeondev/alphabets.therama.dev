@@ -75,4 +75,4 @@ jobs:
         uses: ramaeondev/therama.dev/.github/actions/log-deployment@master
         with:
           start_time: ${{ env.START_TIME }}
-          
+          job_status: ${{ job.status }}
