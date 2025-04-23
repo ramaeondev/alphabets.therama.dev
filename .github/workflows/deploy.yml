@@ -30,18 +30,19 @@ jobs:
             npm cache clean --force
             npm install
       
-      - name: Copy and rename README.md + package.json to public/meta
+      - name: Prepare meta files
         run: |
-          mkdir -p public/meta
           REPO_NAME=$(basename $GITHUB_REPOSITORY)
+          mkdir -p public/meta
           cp README.md public/meta/${REPO_NAME}.md
           cp package.json public/meta/
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           
-      - name: Upload renamed README to S3
+      - name: Upload README to S3
         uses: ramaeondev/therama.dev/.github/actions/upload-to-s3@master
         with:
-          source: public/meta/${{ github.repository }}.md
-          destination: readme/${{ github.repository }}.md
+          source: public/meta/${{ env.REPO_NAME }}.md
+          destination: readme/${{ env.REPO_NAME }}.md
           bucket: ${{ secrets.S3_UPLOAD_BUCKET }}
           region: ${{ secrets.AWS_UPLOAD_REGION }}
         env:
