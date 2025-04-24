@@ -29,29 +29,7 @@ jobs:
             rm -rf node_modules package-lock.json
             npm cache clean --force
             npm install
-      
-      - name: Prepare meta files
-        run: |
-          REPO_NAME=$(basename $GITHUB_REPOSITORY)
-          mkdir -p public/meta
-          cp README.md public/meta/${REPO_NAME}.md
-          cp package.json public/meta/
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-          
-      - name: Upload README to S3
-        uses: ramaeondev/therama.dev/.github/actions/upload-to-s3@master
-        with:
-          source: public/meta/${{ env.REPO_NAME }}.md
-          destination: readme/${{ env.REPO_NAME }}.md
-          bucket: ${{ secrets.S3_UPLOAD_BUCKET }}
-          region: ${{ secrets.AWS_UPLOAD_REGION }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_GLOBAL }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_GLOBAL }}
            
-      - name: Post version to Supabase
-        uses: ramaeondev/therama.dev/.github/actions/post-project-version@master        
-        
       - name: Build
         run: npm run build
         
@@ -71,8 +49,9 @@ jobs:
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
             
-      - name: Log deployment to Supabase
-        uses: ramaeondev/therama.dev/.github/actions/log-deployment@master
+      - name: Log and Update Deployment
+        if: always()
+        uses: ramaeondev/therama.dev/.github/actions/log-and-update-deployment@master
         with:
           start_time: ${{ env.START_TIME }}
-          job_status: ${{ job.status }}
+          s3_bucket: ${{ secrets.S3_UPLOAD_BUCKET }}
