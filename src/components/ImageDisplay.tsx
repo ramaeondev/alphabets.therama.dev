@@ -10,10 +10,10 @@ interface ImageDisplayProps {
 
 const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource }) => {
   const [hasError, setHasError] = useState(false);
-  
+
   // Check if the word represents a number
   const isNumeric = /^\d+$/.test(word) || ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'].includes(word);
-  
+
   // If it's a number, don't display an image
   if (isNumeric) {
     return (
@@ -28,7 +28,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   // Generate a colorful background for fallback
   const getColorForWord = (word: string) => {
     const colors = [
-      'bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200', 
+      'bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200',
       'bg-purple-200', 'bg-pink-200', 'bg-indigo-200', 'bg-teal-200'
     ];
     // Use the first character's code to select a color
@@ -40,7 +40,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
   const generatePlaceholderImage = () => {
     const bgColor = getColorForWord(word);
     const letter = word.charAt(0).toUpperCase();
-    
+
     return (
       <div className={`w-full h-full flex items-center justify-center ${bgColor} rounded-lg`}>
         <div className="text-center">
@@ -50,7 +50,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
       </div>
     );
   };
-  
+
   // Get image path based on source
   const getImageSrc = () => {
     if (imageSource === 'local') {
@@ -58,10 +58,10 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
     }
     return imageUrl;
   };
-  
+
   // Handle image loading error
   const handleImageError = () => {
-    console.log("Image failed to load:", imageSource === 'local' ? `local image for ${word}` : imageUrl);
+
     setHasError(true);
   };
 
@@ -72,7 +72,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ word, imageUrl, imageSource
       </div>
       <div className="w-full h-40 md:h-52 rounded-xl overflow-hidden border-2 border-purple-300 bg-white relative shadow-lg transform transition-transform hover:scale-105">
         {hasError && generatePlaceholderImage()}
-        
+
         {!hasError && (
           <img
             src={getImageSrc()}

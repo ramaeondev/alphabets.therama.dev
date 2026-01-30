@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
-import { 
-  Menubar, 
-  MenubarMenu, 
-  MenubarTrigger, 
-  MenubarContent, 
+import {
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
   MenubarItem,
   MenubarSeparator,
   MenubarLabel,
@@ -12,6 +12,7 @@ import {
 import VoiceSelector from './VoiceSelector';
 import ImageSourceSelector, { ImageSource } from './ImageSourceSelector';
 import { useWordSelection } from '@/contexts/WordSelectionContext';
+import { fetchImageSources } from '@/services/imageSourceService';
 
 interface ImageSourceOption {
   id: string;
@@ -40,25 +41,14 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const { useStaticWord, setUseStaticWord } = useWordSelection();
 
   useEffect(() => {
-    const fetchImageSources = async () => {
+    const loadImageSources = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('https://api.therama.dev/functions/v1/get-image-sources', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setImageSources(data);
+        const sources = await fetchImageSources();
+        setImageSources(sources);
       } catch (error) {
-        console.error("Failed to fetch image sources:", error);
-        // Fallback to default options
+
+        // Fallback is handled in the service
         setImageSources([
           { id: '1', name: 'Local', image_source: 'local', is_disabled: false },
           { id: '2', name: 'Unsplash', image_source: 'unsplash', is_disabled: true },
@@ -73,7 +63,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
       }
     };
 
-    fetchImageSources();
+    loadImageSources();
   }, []);
 
   return (
@@ -84,20 +74,20 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
         </MenubarTrigger>
         <MenubarContent className={darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}>
           <MenubarLabel className="font-bold">Settings</MenubarLabel>
-          
+
           <MenubarSeparator className={darkMode ? 'bg-gray-700' : 'bg-gray-200'} />
-          
+
           <div className="px-3 py-2">
-            <VoiceSelector 
-              voiceType={voiceType} 
-              onVoiceChange={onVoiceChange} 
-              darkMode={darkMode} 
+            <VoiceSelector
+              voiceType={voiceType}
+              onVoiceChange={onVoiceChange}
+              darkMode={darkMode}
               inMenu={true}
             />
           </div>
 
           <MenubarSeparator className={darkMode ? 'bg-gray-700' : 'bg-gray-200'} />
-          
+
           <MenubarLabel>Image Source</MenubarLabel>
           {isLoading ? (
             <MenubarItem disabled>Loading sources...</MenubarItem>
@@ -118,7 +108,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <>
               <MenubarSeparator className={darkMode ? 'bg-gray-700' : 'bg-gray-200'} />
               <MenubarLabel>Word Selection</MenubarLabel>
-              <MenubarItem 
+              <MenubarItem
                 onClick={() => setUseStaticWord(!useStaticWord)}
                 className={useStaticWord ? 'bg-primary text-primary-foreground' : ''}
               >
