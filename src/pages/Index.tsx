@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import SettingsMenu from '@/components/SettingsMenu';
 import { ImageSource } from '@/components/ImageSourceSelector';
+import { fetchAppSettings } from '@/services/appSettingsService';
 import { Helmet } from 'react-helmet'; // Back to original react-helmet
 
 declare global {
@@ -17,6 +18,27 @@ const Index = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [voiceType, setVoiceType] = useState<'male' | 'female'>('female');
   const [imageSource, setImageSource] = useState<ImageSource>('local');
+
+  // Load app settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await fetchAppSettings();
+
+      // Apply default settings from database if available
+      if (settings['default_voice_type']) {
+        setVoiceType(settings['default_voice_type'] as 'male' | 'female');
+      }
+
+      if (settings['default_image_source']) {
+        setImageSource(settings['default_image_source'] as ImageSource);
+      }
+
+      if (settings['dark_mode_default'] !== undefined) {
+        setDarkMode(settings['dark_mode_default']);
+      }
+    };
+    loadSettings();
+  }, []);
   const { toast } = useToast();
   const [isDevMode, setIsDevMode] = useState(false);
 
@@ -36,7 +58,7 @@ const Index = () => {
     script.src = 'https://www.googletagmanager.com/gtag/js?id=G-FHZ9Y2CCG2';
     script.async = true;
     document.head.appendChild(script);
-  
+
     script.onload = () => {
       window.dataLayer = window.dataLayer || [];
       function gtag(...args: any[]) {
@@ -45,7 +67,7 @@ const Index = () => {
       gtag('js', new Date());
       gtag('config', 'G-FHZ9Y2CCG2');
     };
-  
+
     return () => {
       document.head.removeChild(script);
     };

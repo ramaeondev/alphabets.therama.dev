@@ -7,6 +7,7 @@ import { ImageSource } from './ImageSourceSelector';
 import { useToast } from '@/hooks/use-toast';
 import { useWordSelection } from '@/contexts/WordSelectionContext';
 import { fetchLetterWords } from '@/services/letterWordsService';
+import { fetchVoiceSettings, VoiceSetting } from '@/services/voiceSettingsService';
 
 const API_ENDPOINT = "https://api.therama.dev/functions/v1/random-word-image";
 
@@ -54,6 +55,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const [letterCounter, setLetterCounter] = useState<Record<string, number>>({});
   const [currentWordAndImage, setCurrentWordAndImage] = useState<{ word: string, image_url: string } | null>(null);
   const [letterWords, setLetterWords] = useState<Record<string, string[]>>({});
+  const [voiceSettings, setVoiceSettings] = useState<Record<string, VoiceSetting> | null>(null);
   const itemsMapping = useRef<Record<string, Array<{ word: string, image_url: string }>>>({});
   const { toast } = useToast();
   const lastLetter = useRef<string | null>(null);
@@ -66,14 +68,19 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const [speechErrors, setSpeechErrors] = useState<number>(0);
   const speechErrorThreshold = useRef<number>(3);
 
-  // Load letter-words from Appwrite on mount
+  // Load data from Appwrite on mount
   useEffect(() => {
-    const loadLetterWords = async () => {
+    const loadData = async () => {
+      // Fetch letter words
       const words = await fetchLetterWords();
       setLetterWords(words);
       itemsMapping.current = createItemsMapping(words);
+
+      // Fetch voice settings
+      const settings = await fetchVoiceSettings();
+      setVoiceSettings(settings);
     };
-    loadLetterWords();
+    loadData();
   }, []);
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -268,43 +275,64 @@ const TypingGame: React.FC<TypingGameProps> = ({
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         speechSynthesisRef.current = utterance;
 
-        utterance.rate = 0.9;
-        utterance.pitch = voiceType === 'male' ? 0.9 : 1.2;
-        utterance.volume = 1.0;
+        const currentVoiceSettings = voiceSettings ? voiceSettings[voiceType] : null;
+
+        if (currentVoiceSettings) {
+          utterance.rate = currentVoiceSettings.rate;
+          utterance.pitch = currentVoiceSettings.pitch;
+          utterance.volume = currentVoiceSettings.volume;
+        } else {
+          // Fallback if settings not loaded yet
+          utterance.rate = 0.9;
+          utterance.pitch = voiceType === 'male' ? 0.9 : 1.2;
+          utterance.volume = 1.0;
+        }
 
         const voices = window.speechSynthesis.getVoices();
 
-
         let selectedVoice;
 
-        if (voiceType === 'male') {
-          selectedVoice = voices.find(voice =>
-            voice.name.toLowerCase().includes('eddy') &&
-            voice.lang === 'en-US'
-          );
-
-          if (!selectedVoice) {
+        if (currentVoiceSettings && currentVoiceSettings.voice_names.length > 0) {
+          // Try to find a voice matching the preferred names from database
+          for (const name of currentVoiceSettings.voice_names) {
             selectedVoice = voices.find(voice =>
-              voice.name.toLowerCase().includes('male') ||
-              voice.name.toLowerCase().includes('david') ||
-              voice.name.toLowerCase().includes('james') ||
-              voice.name.toLowerCase().includes('paul') ||
-              voice.name.toLowerCase().includes('thomas') ||
-              voice.name.toLowerCase().includes('daniel') ||
-              voice.name.toLowerCase().includes('guy') ||
-              voice.name.toLowerCase().includes('man')
+              voice.name.toLowerCase().includes(name.toLowerCase())
+            );
+            if (selectedVoice) break;
+          }
+        }
+
+        // If no match found from database names, fall back to hardcoded heuristics
+        if (!selectedVoice) {
+          if (voiceType === 'male') {
+            selectedVoice = voices.find(voice =>
+              voice.name.toLowerCase().includes('eddy') &&
+              voice.lang === 'en-US'
+            );
+
+            if (!selectedVoice) {
+              selectedVoice = voices.find(voice =>
+                voice.name.toLowerCase().includes('male') ||
+                voice.name.toLowerCase().includes('david') ||
+                voice.name.toLowerCase().includes('james') ||
+                voice.name.toLowerCase().includes('paul') ||
+                voice.name.toLowerCase().includes('thomas') ||
+                voice.name.toLowerCase().includes('daniel') ||
+                voice.name.toLowerCase().includes('guy') ||
+                voice.name.toLowerCase().includes('man')
+              );
+            }
+          } else {
+            selectedVoice = voices.find(voice =>
+              voice.name.toLowerCase().includes('female') ||
+              voice.name.toLowerCase().includes('lisa') ||
+              voice.name.toLowerCase().includes('sarah') ||
+              voice.name.toLowerCase().includes('victoria') ||
+              voice.name.toLowerCase().includes('karen') ||
+              voice.name.toLowerCase().includes('woman') ||
+              voice.name.toLowerCase().includes('girl')
             );
           }
-        } else {
-          selectedVoice = voices.find(voice =>
-            voice.name.toLowerCase().includes('female') ||
-            voice.name.toLowerCase().includes('lisa') ||
-            voice.name.toLowerCase().includes('sarah') ||
-            voice.name.toLowerCase().includes('victoria') ||
-            voice.name.toLowerCase().includes('karen') ||
-            voice.name.toLowerCase().includes('woman') ||
-            voice.name.toLowerCase().includes('girl')
-          );
         }
 
         if (!selectedVoice) {
