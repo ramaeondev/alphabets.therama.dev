@@ -12,9 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Capture start time
-        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
-
       - name: Checkout code
         uses: actions/checkout@v4
         
@@ -40,18 +37,4 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod' 
-            
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_GLOBAL }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_GLOBAL }}
-          aws-region: ${{ secrets.AWS_REGION }}
-            
-      - name: Log and Update Deployment
-        if: always()
-        uses: ramaeondev/therama.dev/.github/actions/log-and-update-deployment@master
-        with:
-          start_time: ${{ env.START_TIME }}
-          s3_bucket: ${{ secrets.S3_UPLOAD_BUCKET }}
