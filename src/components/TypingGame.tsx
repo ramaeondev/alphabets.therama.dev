@@ -68,7 +68,7 @@ const TypingGame: React.FC<TypingGameProps> = ({
   const [speechErrors, setSpeechErrors] = useState<number>(0);
   const speechErrorThreshold = useRef<number>(3);
 
-  // Load data from Appwrite on mount
+  // Load data from the therama.dev API (static schema) on mount
   useEffect(() => {
     const loadData = async () => {
       // Fetch letter words

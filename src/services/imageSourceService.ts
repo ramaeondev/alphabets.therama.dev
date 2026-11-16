@@ -1,4 +1,4 @@
-import { databases, appwriteConfig } from '@/lib/appwrite';
+import { selectStatic } from '@/lib/staticApi';
 import { ImageSource } from '@/components/ImageSourceSelector';
 
 export interface ImageSourceOption {
@@ -9,40 +9,23 @@ export interface ImageSourceOption {
 }
 
 /**
- * Fetch image sources from Appwrite database using direct API call
+ * Fetch image sources from the therama.dev API (static.image_sources)
  */
 export const fetchImageSources = async (): Promise<ImageSourceOption[]> => {
     try {
-        const url = `${appwriteConfig.endpoint}/databases/${appwriteConfig.databaseId}/collections/image_sources/documents`;
+        const rows = await selectStatic<{ id: string; name: string; image_source: string; is_disabled: boolean }>(
+            'image_sources',
+            'select=id,name,image_source,is_disabled&order=created_at.asc',
+        );
 
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Appwrite-Project': appwriteConfig.projectId,
-                'X-Appwrite-Key': appwriteConfig.apiKey,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Appwrite API responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Map Appwrite documents to ImageSourceOption format
-        const imageSources: ImageSourceOption[] = data.documents.map((doc: any) => ({
-            id: doc.$id,
-            name: doc.name,
-            image_source: doc.image_source as ImageSource,
-            is_disabled: doc.is_disabled || false,
+        return rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            image_source: row.image_source as ImageSource,
+            is_disabled: row.is_disabled || false,
         }));
-
-        return imageSources;
     } catch (error) {
-
-
-        // Return fallback data if Appwrite query fails
+        // Return fallback data if the API request fails
         return [
             { id: '1', name: 'Local', image_source: 'local', is_disabled: false },
             { id: '2', name: 'Unsplash', image_source: 'unsplash', is_disabled: true },

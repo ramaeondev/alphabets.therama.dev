@@ -1,4 +1,4 @@
-import { appwriteConfig } from '@/lib/appwrite';
+import { selectStatic } from '@/lib/staticApi';
 
 export interface LetterWord {
     id: string;
@@ -9,75 +9,23 @@ export interface LetterWord {
 }
 
 /**
- * Fetch letter-word mappings from Appwrite database
+ * Fetch letter-word mappings from the therama.dev API (static.letter_words)
  */
 export const fetchLetterWords = async (): Promise<Record<string, string[]>> => {
     try {
-        // Use explicit JSON query format (requested by user/Appwrite requirement)
-        const queryParams = new URLSearchParams();
-        queryParams.append('queries[]', 'limit(100)');
-        // Note: The user provided a JSON format example, but usually 'limit(100)' string format works if encoded correctly.
-        // However, if the user specifically asked for the JSON format, the SDK usually handles that.
-        // But for RAW REST, let's try strict `queries[]=limit(100)` again but properly appended.
+        const rows = await selectStatic<{ letter: string; words: string[] }>(
+            'letter_words',
+            'select=letter,words&is_active=eq.true',
+        );
 
-        // Actually, the user provided URL indicates: queries[0]={"method":"limit","values":[100]}
-        // This is internal Appwrite format. Let's try standard REST first:
-        // Or simply stick to what works for client SDKs usually: `queries[]=limit(100)`
-
-        // Let's matching the user's successful request pattern exactly:
-        // ?queries[0]={"method":"limit","values":[100]}&queries[1]={"method":"offset","values":[0]}
-
-        const url = `${appwriteConfig.endpoint}/databases/${appwriteConfig.databaseId}/collections/letter_words/documents?queries[0]=%7B%22method%22%3A%22limit%22%2C%22values%22%3A%5B100%5D%7D`;
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Appwrite-Project': appwriteConfig.projectId,
-                'X-Appwrite-Key': appwriteConfig.apiKey,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Appwrite API responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Map Appwrite documents to ImageSourceOption format
         const letterWordsMap: Record<string, string[]> = {};
-
-        data.documents.forEach((doc: any) => {
-            if (doc.is_active) {
-                let words: string[] = [];
-
-                if (Array.isArray(doc.words)) {
-                    words = doc.words;
-                } else if (typeof doc.words === 'string') {
-                    try {
-                        // Try to parse if it's a JSON string
-                        if (doc.words.trim().startsWith('[') && doc.words.trim().endsWith(']')) {
-                            words = JSON.parse(doc.words);
-                        } else {
-                            // It's just a single string word
-                            words = [doc.words];
-                        }
-                    } catch (e) {
-                        // Failed to parse, using as single string
-                        words = [doc.words];
-                    }
-                } else {
-                    // Fallback
-                    words = [String(doc.words)];
-                }
-
-                letterWordsMap[doc.letter] = words;
-            }
+        rows.forEach((row) => {
+            letterWordsMap[row.letter] = Array.isArray(row.words) ? row.words : [];
         });
 
         return letterWordsMap;
     } catch (error) {
-        // Return fallback data if Appwrite query fails
+        // Return fallback data if the API request fails
         return getFallbackLetterWords();
     }
 };

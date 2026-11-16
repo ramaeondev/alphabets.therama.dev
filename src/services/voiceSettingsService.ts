@@ -1,4 +1,4 @@
-import { appwriteConfig } from '@/lib/appwrite';
+import { selectStatic } from '@/lib/staticApi';
 
 export interface VoiceSetting {
     id: string;
@@ -10,59 +10,33 @@ export interface VoiceSetting {
 }
 
 /**
- * Fetch voice settings from Appwrite database
+ * Fetch voice settings from the therama.dev API (static.voice_settings)
  */
 export const fetchVoiceSettings = async (): Promise<Record<string, VoiceSetting>> => {
     try {
-        const url = `${appwriteConfig.endpoint}/databases/${appwriteConfig.databaseId}/collections/voice_settings/documents`;
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Appwrite-Project': appwriteConfig.projectId,
-                'X-Appwrite-Key': appwriteConfig.apiKey,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`Appwrite API responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const rows = await selectStatic<{
+            id: string;
+            voice_type: 'male' | 'female';
+            pitch: number;
+            rate: number;
+            voice_names: string[];
+        }>('voice_settings', 'select=id,voice_type,pitch,rate,voice_names&order=priority.asc');
 
         const settingsMap: Record<string, VoiceSetting> = {};
-
-        data.documents.forEach((doc: any) => {
-            // Parse voice names if they are strings/JSON
-            let voiceNames: string[] = [];
-            if (Array.isArray(doc.voice_names)) {
-                voiceNames = doc.voice_names;
-            } else if (typeof doc.voice_names === 'string') {
-                try {
-                    if (doc.voice_names.trim().startsWith('[')) {
-                        voiceNames = JSON.parse(doc.voice_names);
-                    } else {
-                        voiceNames = [doc.voice_names];
-                    }
-                } catch (e) {
-                    voiceNames = [doc.voice_names];
-                }
-            }
-
-            settingsMap[doc.voice_type] = {
-                id: doc.$id,
-                voice_type: doc.voice_type,
-                pitch: doc.pitch,
-                rate: doc.rate,
-                volume: doc.volume,
-                voice_names: voiceNames
+        rows.forEach((row) => {
+            settingsMap[row.voice_type] = {
+                id: row.id,
+                voice_type: row.voice_type,
+                pitch: row.pitch,
+                rate: row.rate,
+                volume: 1.0,
+                voice_names: Array.isArray(row.voice_names) ? row.voice_names : [],
             };
         });
 
         return settingsMap;
     } catch (error) {
-        // Return fallback data if Appwrite query fails
+        // Return fallback data if the API request fails
         return getFallbackVoiceSettings();
     }
 };
